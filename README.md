@@ -1,0 +1,2 @@
+# cpe
+Codon pair encoder
