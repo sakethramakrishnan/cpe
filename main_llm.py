@@ -5,6 +5,7 @@ from typing import Generator
 from pathlib import Path
 import sys
 import bpe_tokenizer
+from transformers import AutoTokenizer, AutoModel
 
 import os
 import numpy as np
@@ -114,16 +115,16 @@ def bool_flag(s):
     else:
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
-def get_sequences():
-    if args.fasta_filepath != None and args.fasta_folder_filepath != None:
+def get_sequences(fasta_filepath: str, fasta_folder_filepath: str):
+    if fasta_filepath and fasta_folder_filepath:
         sys.exit("Kindly use either a single .fasta file or a folder with many .fasta files in it; do not input both as arguments")
-    elif args.fasta_filepath == None and args.fasta_folder_filepath == None:
+    elif not (fasta_filepath  or fasta_folder_filepath):
         sys.exit("Kindly input either a .fasta file or a folder containing many .fasta files to create the dataset")
-    elif args.fasta_filepath != None:
-        sequences = bpe_tokenizer.read_fasta_only_seq(args.fasta_filepath)
+    elif fasta_filepath:
+        sequences = bpe_tokenizer.read_fasta_only_seq(fasta_filepath)
         sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
-    elif args.fasta_folder_filepath != None:
-        sequences = bpe_tokenizer.fasta_corpus_iterator(args.fasta_folder_filepath)
+    elif fasta_folder_filepath:
+        sequences = bpe_tokenizer.fasta_corpus_iterator(fasta_folder_filepath)
         sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
 
     return sequences
@@ -175,6 +176,7 @@ def get_model():
     if args.model_name == 'bert_3m':
         arch_path = Path('/cpe/architectures/bert/bert_3m.json')
         config = PretrainedConfig.from_json_file(arch_path)
+        #model = AutoModel.from_config(config)
         model = BertForMaskedLM(config)
 
     elif args.model_name == 'bert_33m':
@@ -257,10 +259,8 @@ if __name__ == "__main__":
 
     os.environ["WANDB_DISABLED"] = "true"
     args = get_args()
-    sequences = get_sequences()
+    sequences = get_sequences(args.fasta_filepath, args.fasta_folder_filepath)
     tokenizer = get_tokenizer(sequences)
-
-    from transformers import AutoTokenizer, AutoModel
 
     model = get_model()
 
