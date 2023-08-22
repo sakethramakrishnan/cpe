@@ -29,13 +29,12 @@ def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
 
     # Model hyperparameters
-    parser.add_argument('--model_name', type=str, default='BertForMaskedLM', choices=['bert_3m', 'bert_33m', 'bert_330m'], help='Name of the Hugging Face BERT model')
+    parser.add_argument('--model_architecture', type=str, help='Path of the Hugging Face model architecture JSON file')
     parser.add_argument('--model_checkpoint', type=str, default=None, help='Path to a pre-trained BERT model checkpoint')
 
 
     # filepath to fasta files:
-    parser.add_argument('--fasta_filepath', type=str, default=None, help='The filepath to the .fasta file with sequences')
-    parser.add_argument('--fasta_folder_filepath', type=str, default=None, help='The filepath to the FOLDER with many .fasta files')
+    parser.add_argument('--fasta_path', type=Path, default=None, help='The filepath to the .fasta file with sequences')
 
     # Tokenizer hyperparameters
     parser.add_argument('--tokenizer_checkpoint', type=str, default=None, help='Path to a pre-trained tokenizer checkpoint')
@@ -70,7 +69,7 @@ def get_args():
 
     # Arguments used for training:
     parser.add_argument('--output_dir', type=str, default='bpe_llm_out', help='Path where to save visualizations.')
-    parser.add_argument('--per_device_train_batch_size', default=64, type=int,
+    parser.add_argument('--per_device_train_batch_size', default=16, type=int,
                         help='Per-GPU training batch-size : number of distinct sequences loaded on one GPU during training.')
     parser.add_argument('--per_device_eval_batch_size', default=64, type=int,
                         help='Per-GPU evaluation batch-size : number of distinct sequences loaded on one GPU during testing.')
@@ -116,17 +115,14 @@ def bool_flag(s):
     else:
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
-def get_sequences(fasta_filepath: str, fasta_folder_filepath: str):
-    if fasta_filepath and fasta_folder_filepath:
-        sys.exit("Kindly use either a single .fasta file or a folder with many .fasta files in it; do not input both as arguments")
-    elif not (fasta_filepath  or fasta_folder_filepath):
-        sys.exit("Kindly input either a .fasta file or a folder containing many .fasta files to create the dataset")
-    elif fasta_filepath:
-        sequences = bpe_tokenizer.read_fasta_only_seq(fasta_filepath)
-        sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
-    elif fasta_folder_filepath:
-        sequences = bpe_tokenizer.fasta_corpus_iterator(fasta_folder_filepath)
-        sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
+def get_sequences(fasta_path: str):
+    if fasta_path.is_file():
+        sequences = bpe_tokenizer.read_fasta_only_seq(fasta_path)
+        print(len(sequences))
+    else:
+        sequences = bpe_tokenizer.fasta_corpus_iterator(fasta_path)
+    
+    sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
 
     return sequences
 
@@ -172,7 +168,13 @@ def get_dataset(sequences, tokenizer):
     dataset = dataset.train_test_split(test_size=args.test_size)
 
     return dataset
-def get_model():
+
+def get_model(arch_path):
+    config = PretrainedConfig.from_json_file(arch_path)
+    model = BertForMaskedLM(config)
+    return model
+
+def _get_model():
 
     if args.model_name == 'bert_3m':
         arch_path = Path('/cpe/architectures/bert/bert_3m.json')
@@ -201,7 +203,7 @@ def get_optimizer():
         optimizer = AdamW(
             model.parameters(),
             lr=args.learning_rate,
-            ep=args.adam_epsilon,
+            #ep=args.adam_epsilon,
             weight_decay=args.weight_decay,
         )
 
@@ -254,16 +256,22 @@ def train_model(model, train_args: TrainingArguments, tokenizer, dataset, data_c
 
     # train
 
+    # TODO: Save a checkpoint at the very end
+
     return trainer
 
 if __name__ == "__main__":
 
     os.environ["WANDB_DISABLED"] = "true"
     args = get_args()
-    sequences = get_sequences(args.fasta_filepath, args.fasta_folder_filepath)
+    sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences)
 
-    model = get_model()
+    model = get_model(args.model_architecture)
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    model = model.to(device)
 
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=args.mlm)
     dataset = get_dataset(sequences, tokenizer)

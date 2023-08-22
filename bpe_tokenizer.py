@@ -36,7 +36,7 @@ CODON_CHAR = {
     'TGA': "@"
 }
 
-def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
+def read_fasta_only_seq_iter(fasta_file: PathLike) -> List[str]:
     """Reads fasta file sequences without description tag."""
     text = Path(fasta_file).read_text()
     pattern = re.compile("^>", re.MULTILINE)
@@ -44,8 +44,8 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
     lines = [
         line.replace("\n", "") for seq in non_parsed_seqs for line in seq.split("\n", 1)
     ]
-
-    yield lines[1::2]
+    for sequence in lines[1::2]:
+        yield sequence
 
 
 def group_and_contextualize(seq: str, k: int = 3):
