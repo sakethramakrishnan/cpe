@@ -99,7 +99,7 @@ def get_args():
     parser.add_argument('--push_to_hub', type=bool_flag, default=False,
                         help='Whether or not to push the model to the HuggingFace hub')
 
-    return args
+    return parser
 
 def bool_flag(s):
     """
@@ -256,7 +256,8 @@ def train_model(model, train_args: TrainingArguments, tokenizer, dataset, data_c
 if __name__ == "__main__":
 
     os.environ["WANDB_DISABLED"] = "true"
-    args = get_args()
+    parser = get_args()
+    args = parser.parse_args()
     sequences = get_sequences()
     tokenizer = get_tokenizer(sequences)
 
