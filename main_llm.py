@@ -100,6 +100,7 @@ def get_args():
     parser.add_argument('--push_to_hub', type=bool_flag, default=False,
                         help='Whether or not to push the model to the HuggingFace hub')
 
+    args = parser.parse_args()
     return args
 
 def bool_flag(s):
