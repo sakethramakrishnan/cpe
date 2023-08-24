@@ -5,6 +5,7 @@ from typing import Optional, List
 from pathlib import Path
 import sys
 import bpe_tokenizer
+from transformers import AutoTokenizer, AutoModel
 
 import os
 import numpy as np
@@ -122,7 +123,6 @@ def bool_flag(s):
     else:
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
-
 def get_sequences(fasta_path: str):
     if fasta_path.is_file():
         sequences = bpe_tokenizer.read_fasta_only_seq(fasta_path)
@@ -131,7 +131,6 @@ def get_sequences(fasta_path: str):
         sequences = bpe_tokenizer.fasta_corpus_iterator(fasta_path)
 
     sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
-
     return sequences
 
 
@@ -179,13 +178,6 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
     return dataset
 
-
-# def get_model(arch_path):
-#     config = PretrainedConfig.from_json_file(arch_path)
-#     model = BertForMaskedLM(config)
-#     return model
-
-
 def _get_model(model_architecture: str):
     if model_architecture == 'bert_3m':
         arch_path = Path('cpe/architectures/bert/bert_3m.json')
@@ -196,6 +188,7 @@ def _get_model(model_architecture: str):
     elif model_architecture == 'bert_33m':
         arch_path = Path('cpe/architectures/bert/bert_33m.json')
         config = PretrainedConfig.from_json_file(arch_path)
+        #model = AutoModel.from_config(config)
         model = BertForMaskedLM(config)
 
     elif model_architecture == 'bert_330m':
@@ -217,7 +210,6 @@ def get_optimizer(optimizer: str, learning_rate: float, weight_decay: float):
             # ep=adam_epsilon,
             weight_decay=weight_decay,
         )
-
     else:
         sys.exit('Your optimizer is not one that our pipeline supports')
 
