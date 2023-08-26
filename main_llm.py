@@ -5,7 +5,7 @@ from typing import Optional, List
 from pathlib import Path
 import sys
 import bpe_tokenizer
-from transformers import AutoTokenizer, AutoModel
+import evaluate
 
 import os
 import numpy as np
@@ -24,7 +24,7 @@ from transformers import (
     TrainingArguments
 )
 
-from datasets import Dataset, load_metric
+from datasets import Dataset
 
 
 def get_args():
@@ -32,11 +32,13 @@ def get_args():
 
     # Model hyperparameters
     parser.add_argument('--model_architecture', type=str, help='Path of the Hugging Face model architecture JSON file')
+
     parser.add_argument('--model_checkpoint', type=str, default=None,
                         help='Path to a pre-trained BERT model checkpoint')
 
     # filepath to fasta files:
     parser.add_argument('--fasta_path', type=Path, default=None, help='The filepath or folderpath to the .fasta file(s) with sequences')
+
 
     # Tokenizer hyperparameters
     parser.add_argument('--tokenizer_checkpoint', type=str, default=None,
@@ -44,7 +46,7 @@ def get_args():
     parser.add_argument('--padding', type=str, default='max_length', choices=['longest', 'max_length', 'do_not_pad'],
                         help='Whether to pad the inputs')
     parser.add_argument('--vocab_size', type=int, default=50_257,
-                        help='The number of elements in the vocabulary of the tokenizer')
+                         help='The number of elements in the vocabulary of the tokenizer')
     parser.add_argument('--max_length', type=int, default=1024, help='Maximum input sequence length')
     parser.add_argument('--truncation', type=int, default=True,
                         help='Truncating sequences to fit within a specified maximum length')
@@ -154,15 +156,14 @@ def get_tokenizer(sequences: Optional = None, tokenizer_checkpoint: Optional = N
     return tokenizer
 
 
-def compute_metrics(p):
-    # must use args\. because the compute metrics goes directly into the Trainer
-    # so it takes in p as the prediction
-    # and no other arguments
-    metric = load_metric(args.eval_metric)
-    return metric.compute(
-        predictions=np.argmax(p.predictions, axis=1),
-        references=p.label_ids
-    )
+
+def compute_metrics(eval_preds):
+    metric = evaluate.load("accuracy")
+    logits, labels = eval_preds
+    predictions = np.argmax(logits, axis=-1)
+    predictions = predictions.reshape(predictions.size)
+    labels = labels.reshape(predictions.size)
+    return metric.compute(predictions=predictions, references=labels)
 
 
 def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_utils_fast.PreTrainedTokenizerFast], max_length: int, padding: str, truncation: bool, test_size: float):
@@ -180,7 +181,7 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
 def _get_model(model_architecture: str):
     if model_architecture == 'bert_3m':
-        arch_path = Path('cpe/architectures/bert/bert_3m.json')
+        arch_path = Path('architectures/bert/bert_3m.json')
         config = PretrainedConfig.from_json_file(arch_path)
         # model = AutoModel.from_config(config)
         model = BertForMaskedLM(config)
@@ -294,6 +295,7 @@ if __name__ == "__main__":
     args = get_args()
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
+    print(sequences[0])
 
     model = _get_model(args.model_architecture)
 
