@@ -45,8 +45,10 @@ def get_args():
                         help='Path to a pre-trained tokenizer checkpoint')
     parser.add_argument('--padding', type=str, default='max_length', choices=['longest', 'max_length', 'do_not_pad'],
                         help='Whether to pad the inputs')
+
     parser.add_argument('--vocab_size', type=int, default=50_257,
                          help='The number of elements in the vocabulary of the tokenizer')
+
     parser.add_argument('--max_length', type=int, default=1024, help='Maximum input sequence length')
     parser.add_argument('--truncation', type=int, default=True,
                         help='Truncating sequences to fit within a specified maximum length')
@@ -181,19 +183,23 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
 def _get_model(model_architecture: str):
     if model_architecture == 'bert_3m':
+
         arch_path = Path('architectures/bert/bert_3m.json')
+
         config = PretrainedConfig.from_json_file(arch_path)
         # model = AutoModel.from_config(config)
         model = BertForMaskedLM(config)
 
     elif model_architecture == 'bert_33m':
-        arch_path = Path('cpe/architectures/bert/bert_33m.json')
+        #arch_path = Path('/cpe/architectures/bert/bert_33m.json')
+        arch_path = Path('architectures/bert/bert_330m.json')
         config = PretrainedConfig.from_json_file(arch_path)
         #model = AutoModel.from_config(config)
         model = BertForMaskedLM(config)
 
     elif model_architecture == 'bert_330m':
-        arch_path = Path('cpe/architectures/bert/bert_330m.json')
+        #arch_path = Path('/cpe/architectures/bert/bert_330m.json')
+        arch_path = Path('architectures/bert/bert_330m.json')
         config = PretrainedConfig.from_json_file(arch_path)
         model = BertForMaskedLM(config)
 
