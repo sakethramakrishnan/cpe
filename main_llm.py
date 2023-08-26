@@ -31,7 +31,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
 
     # Model hyperparameters
-    parser.add_argument('--model_architecture', type=str, help='Path of the Hugging Face model architecture JSON file')
+    parser.add_argument('--model_architecture', type=str, default='bert_3m', help='Path of the Hugging Face model architecture JSON file')
 
     parser.add_argument('--model_checkpoint', type=str, default=None,
                         help='Path to a pre-trained BERT model checkpoint')
@@ -182,35 +182,40 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
     return dataset
 
-def get_model(model_architecture: str, tokenizer):
-
-    if model_architecture == 'bert_3m':
-        arch_path = Path('architectures/bert/bert_3m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'bert_33m':
-        arch_path = Path('architectures/bert/bert_33m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'bert_330m':
-        arch_path = Path('architectures/bert/bert_330m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
+def get_model(model_architecture: Optional = None, model_checkpoint: Optional = None, tokenizer):
+    if model_checkpoint:
+        model = BertForMaskedLM.from_pretrained(Path(model_checkpoint))
     else:
-        sys.exit('Please provide a valid model architecture in the "model_architecture" argument')
+        if model_architecture == 'bert_3m':
+            arch_path = Path('architectures/bert/bert_3m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = BertForMaskedLM(config)
+
+        elif model_architecture == 'bert_33m':
+            arch_path = Path('architectures/bert/bert_33m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = BertForMaskedLM(config)
+
+        elif model_architecture == 'bert_330m':
+            arch_path = Path('architectures/bert/bert_330m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = BertForMaskedLM(config)
+
+        else:
+            sys.exit('Please provide a valid model architecture in the "model_architecture" argument')
 
     return model
 
+def get_checkpoint_model(model_path: str):
+    model = BertForMaskedLM.from_pretrained(Path(model_path))
 
+    return model
 def get_optimizer(optimizer: str, learning_rate: float, weight_decay: float):
     if optimizer == 'adamw':
         optimizer = AdamW(
@@ -306,7 +311,7 @@ if __name__ == "__main__":
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
     print('Number of sequences:', len(sequences))
 
-    model = get_model(args.model_architecture, tokenizer)
+    model = get_model(args.model_architecture, args.model_checkpoint, tokenizer)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
