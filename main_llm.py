@@ -80,7 +80,7 @@ def get_args():
 
     # Arguments used for training:
     parser.add_argument('--output_dir', type=str, default='bpe_llm_out', help='Path where to save visualizations.')
-    parser.add_argument('--per_device_train_batch_size', default=16, type=int,
+    parser.add_argument('--per_device_train_batch_size', default=64, type=int,
                         help='Per-GPU training batch-size : number of distinct sequences loaded on one GPU during training.')
     parser.add_argument('--per_device_eval_batch_size', default=64, type=int,
                         help='Per-GPU evaluation batch-size : number of distinct sequences loaded on one GPU during testing.')
@@ -128,6 +128,7 @@ def bool_flag(s):
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
 def get_sequences(fasta_path: str):
+    fasta_path = Path(fasta_path)
     if fasta_path.is_file():
         sequences = bpe_tokenizer.read_fasta_only_seq(fasta_path)
         print(len(sequences))
@@ -181,26 +182,27 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
     return dataset
 
-def _get_model(model_architecture: str):
+def get_model(model_architecture: str, tokenizer):
+
     if model_architecture == 'bert_3m':
-
         arch_path = Path('architectures/bert/bert_3m.json')
-
         config = PretrainedConfig.from_json_file(arch_path)
-        # model = AutoModel.from_config(config)
+        config.vocab_size = tokenizer.vocab_size
+        config.pad_token_id = tokenizer.pad_token_id
         model = BertForMaskedLM(config)
 
     elif model_architecture == 'bert_33m':
-        #arch_path = Path('/cpe/architectures/bert/bert_33m.json')
-        arch_path = Path('architectures/bert/bert_330m.json')
+        arch_path = Path('architectures/bert/bert_33m.json')
         config = PretrainedConfig.from_json_file(arch_path)
-        #model = AutoModel.from_config(config)
+        config.vocab_size = tokenizer.vocab_size
+        config.pad_token_id = tokenizer.pad_token_id
         model = BertForMaskedLM(config)
 
     elif model_architecture == 'bert_330m':
-        #arch_path = Path('/cpe/architectures/bert/bert_330m.json')
         arch_path = Path('architectures/bert/bert_330m.json')
         config = PretrainedConfig.from_json_file(arch_path)
+        config.vocab_size = tokenizer.vocab_size
+        config.pad_token_id = tokenizer.pad_token_id
         model = BertForMaskedLM(config)
 
     else:
@@ -298,12 +300,13 @@ def train_model(
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
+
     args = get_args()
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
-    print(sequences[0])
+    print('Number of sequences:', len(sequences))
 
-    model = _get_model(args.model_architecture)
+    model = get_model(args.model_architecture, tokenizer)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -334,5 +337,6 @@ if __name__ == "__main__":
     trainer = train_model(model, training_args, tokenizer, dataset, data_collator)
 
     trainer.train()
+
 
 
