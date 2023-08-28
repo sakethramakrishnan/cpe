@@ -21,7 +21,8 @@ from transformers import (
     PreTrainedTokenizerFast,
     DataCollatorForLanguageModeling,
     Trainer,
-    TrainingArguments
+    TrainingArguments,
+    GPTNeoXForCausalLM
 )
 
 from datasets import Dataset
@@ -140,19 +141,8 @@ def get_sequences(fasta_path: str):
 
 
 def get_tokenizer(sequences: Optional = None, tokenizer_checkpoint: Optional = None, vocab_size: Optional = None):
-    special_tokens = {
-        "unk_token": "[UNK]",
-        "cls_token": "[CLS]",
-        "sep_token": "[SEP]",
-        "pad_token": "[PAD]",
-        "mask_token": "[MASK]",
-        "bos_token": "[BOS]",
-        "eos_token": "[EOS]"
-    }
-
     if tokenizer_checkpoint:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_checkpoint)
-        tokenizer.add_special_tokens(special_tokens)
     else:
         tokenizer = bpe_tokenizer.build_tokenizer(sequences, vocab_size)
 
@@ -170,8 +160,15 @@ def compute_metrics(eval_preds):
 
 
 def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_utils_fast.PreTrainedTokenizerFast], max_length: int, padding: str, truncation: bool, test_size: float):
-    tokenized_seqs = tokenizer(sequences, max_length=max_length, padding=padding, truncation=truncation,
-                               return_tensors="pt")
+    tokenized_seqs = tokenizer(
+        sequences,
+        max_length=max_length,
+        padding=padding,
+        truncation=truncation,
+        return_tensors="pt"
+    )
+
+
     data = {
         "input_ids": tokenized_seqs.input_ids.tolist(),
         "attention_mask": tokenized_seqs.attention_mask.tolist()
@@ -182,10 +179,12 @@ def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_
 
     return dataset
 
-def get_model(model_architecture: Optional = None, model_checkpoint: Optional = None, tokenizer):
+def get_model(tokenizer, model_architecture: Optional = None, model_checkpoint: Optional = None):
     if model_checkpoint:
         model = BertForMaskedLM.from_pretrained(Path(model_checkpoint))
-    else:
+
+    elif model_architecture:
+
         if model_architecture == 'bert_3m':
             arch_path = Path('architectures/bert/bert_3m.json')
             config = PretrainedConfig.from_json_file(arch_path)
@@ -207,8 +206,29 @@ def get_model(model_architecture: Optional = None, model_checkpoint: Optional = 
             config.pad_token_id = tokenizer.pad_token_id
             model = BertForMaskedLM(config)
 
-        else:
-            sys.exit('Please provide a valid model architecture in the "model_architecture" argument')
+        elif model_architecture == 'neox_3m':
+            arch_path = Path('architectures/neox/neox_3m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = GPTNeoXForCausalLM(config)
+
+        elif model_architecture == 'neox_33m':
+            arch_path = Path('architectures/neox/neox_33m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = BertForMaskedLM(config)
+
+        elif model_architecture == 'neox_330m':
+            arch_path = Path('architectures/neox/neox_330m.json')
+            config = PretrainedConfig.from_json_file(arch_path)
+            config.vocab_size = tokenizer.vocab_size
+            config.pad_token_id = tokenizer.pad_token_id
+            model = BertForMaskedLM(config)
+
+    else:
+        sys.exit('Please provide a valid model architecture in the "model_architecture" argument')
 
     return model
 
@@ -309,9 +329,12 @@ if __name__ == "__main__":
     args = get_args()
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
+
+    sequences = sequences[0:1000]
+
     print('Number of sequences:', len(sequences))
 
-    model = get_model(args.model_architecture, args.model_checkpoint, tokenizer)
+    model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 

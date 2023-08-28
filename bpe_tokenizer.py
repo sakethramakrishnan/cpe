@@ -168,9 +168,7 @@ def build_tokenizer(corpus_iterator, vocab_size=50_257, add_bos_eos: bool = True
 
 
 if __name__ == "__main__":
-    sequence_file = Path(
-        "/home/couchbucks/Downloads/GCF_000315915.1_ASM31591v1_genomic_extracted_sequences.fasta"
-    )
+    sequence_file = Path()
     start = time.time()
     sequences = SequenceReader(sequence_file)
     # sequences = fasta_corpus_iterator(sequence_file)
