@@ -330,8 +330,6 @@ if __name__ == "__main__":
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
 
-    sequences = sequences[0:1000]
-
     print('Number of sequences:', len(sequences))
 
     model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
