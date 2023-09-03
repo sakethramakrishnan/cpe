@@ -26,7 +26,7 @@ from transformers import (
 )
 
 from datasets import Dataset
-
+from torch.utils.data import DataLoader
 
 def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
@@ -300,8 +300,11 @@ def train_model(
         model,
         train_args: TrainingArguments,
         tokenizer: List[transformers.tokenization_utils_fast.PreTrainedTokenizerFast],
-        dataset: List[datasets.dataset_dict.DatasetDict],
-        data_collator
+        #dataset: List[datasets.dataset_dict.DatasetDict],
+        train_dataset,
+        test_dataset,
+        data_collator,
+        device
 ):
     # Build model
 
@@ -311,8 +314,8 @@ def train_model(
         tokenizer=tokenizer,
         args=train_args,
         data_collator=data_collator,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["test"],
+        train_dataset=train_dataset,#.to(device),
+        eval_dataset=test_dataset,#.to(device),
         compute_metrics=compute_metrics
     )
 
@@ -329,17 +332,22 @@ if __name__ == "__main__":
     args = get_args()
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
-
+    
     print('Number of sequences:', len(sequences))
+
+    #sequences = sequences[0:1000]
 
     model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    torch.cuda.empty_cache()
     model = model.to(device)
 
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=args.mlm)
     dataset = get_dataset(sequences, tokenizer, args.max_length, args.padding, args.truncation, args.test_size)
+    
+    train_dataloader = DataLoader(dataset['train'], batch_size=64)
+    test_dataloader = DataLoader(dataset['test'], batch_size=64)
     optimizer = get_optimizer(args.optimizer, args.learning_rate, args.weight_decay)
     scheduler = get_lr_scheduler(args.lr_scheduler, optimizer, args.num_train_epochs)
 
@@ -360,8 +368,12 @@ if __name__ == "__main__":
         args.fp16,
         args.push_to_hub
     )
-    trainer = train_model(model, training_args, tokenizer, dataset, data_collator)
-
+    import gc
+    #del variables
+    gc.collect()
+    trainer = train_model(model, training_args, tokenizer, dataset['train'], dataset['test'], data_collator, device)
+    #trainer.get_train_dataloader()
+    torch.cuda.empty_cache()
     trainer.train()
 
 
