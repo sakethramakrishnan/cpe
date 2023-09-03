@@ -1,6 +1,6 @@
 import argparse
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from pathlib import Path
 import sys
@@ -22,11 +22,14 @@ from transformers import (
     DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
-    GPTNeoXForCausalLM
+    GPTNeoXForCausalLM,
+    BatchEncoding
 )
 
 from datasets import Dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import random_split
+from torch.utils.data import Dataset as TypeDataset
+import re
 
 def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
@@ -324,7 +327,80 @@ def train_model(
     # TODO: Save a checkpoint at the very end
 
     return trainer
+def group_codons(seq: str) -> str:
+    return " ".join(seq[i : i + 3] for i in range(0, len(seq), 3)).upper()
 
+def read_fasta_only_seq(fasta_file: str) -> List[str]:
+    """Reads fasta file sequences without description tag."""
+    text = Path(fasta_file).read_text()
+    pattern = re.compile("^>", re.MULTILINE)
+    non_parsed_seqs = re.split(pattern, text)[1:]
+    lines = [
+        line.replace("\n", "")
+        for seq in non_parsed_seqs
+        for line in seq.split("\n", 1)
+    ]
+    return lines[1::2]
+
+
+class FastaDataset(TypeDataset):
+    def __init__(self, file_path: str) -> None:
+        # Read the fasta file
+        dna_sequenes = read_fasta_only_seq(file_path)
+        # Preprocess the sequences into codons
+        # TODO: We could also use an <unk> token (this would be better)
+        self.sequences = [
+            group_codons(seq) for seq in dna_sequenes if len(seq) % 3 == 0
+        ]
+
+    def __len__(self) -> int:
+        return len(self.sequences)
+
+    def __getitem__(self, idx: int) -> Dict[str, str]:
+        # Get the idx'th codon sequence
+        # return {"codon": self.sequences[idx]}
+        return self.sequences[idx]
+
+
+class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
+    """Augment the underlying DataCollatorForLanguageModeling to handle
+    multiple batch encoding inputs."""
+
+    def __init__(self, train_mode: bool = False, **kwargs) -> None:
+        self.train_mode = train_mode
+        super().__init__(**kwargs)
+
+    def tokenize(self, sequences: List[str]) -> BatchEncoding:
+        return self.tokenizer(
+            sequences,
+            max_length=1024,
+            return_tensors="pt",
+            truncation=True,
+            padding=True,
+            return_special_tokens_mask=self.train_mode and self.mlm,
+        )
+
+    def torch_call(self, examples: List[Dict[str, str]]) -> Dict[str, Any]:
+        # First, tokenize the batch
+        #print(examples)
+        batch = self.tokenize([e for e in examples])
+
+        # We only need to mask tokens if we are training
+        if not self.train_mode:
+            return batch
+
+        if self.mlm:
+            # If special token mask has been preprocessed, pop it from the dict.
+            batch["input_ids"], batch["labels"] = self.torch_mask_tokens(
+                batch["input_ids"],
+                special_tokens_mask=batch.pop("special_tokens_mask", None),
+            )
+        else:
+            labels = batch["input_ids"].clone()
+            if self.tokenizer.pad_token_id is not None:
+                labels[labels == self.tokenizer.pad_token_id] = -100
+            batch["labels"] = labels
+        return batch
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
@@ -332,10 +408,8 @@ if __name__ == "__main__":
     args = get_args()
     sequences = get_sequences(args.fasta_path)
     tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
-    
-    print('Number of sequences:', len(sequences))
 
-    #sequences = sequences[0:1000]
+
 
     model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
 
@@ -343,11 +417,19 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     model = model.to(device)
 
-    data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=args.mlm)
-    dataset = get_dataset(sequences, tokenizer, args.max_length, args.padding, args.truncation, args.test_size)
-    
-    train_dataloader = DataLoader(dataset['train'], batch_size=64)
-    test_dataloader = DataLoader(dataset['test'], batch_size=64)
+
+    dataset = FastaDataset(file_path=args.fasta_path)
+
+    data_collator = GenSLMCollatorForLanguageModeling(
+        train_mode=True,
+        tokenizer=tokenizer,
+        mlm=True,
+        mlm_probability=0.15,
+    )
+    train_length = int(np.round(len(dataset) * (1 - args.test_size)))
+    lengths = [train_length, len(dataset) - train_length]
+    train_dataset, valid_dataset = random_split(dataset, lengths)
+
     optimizer = get_optimizer(args.optimizer, args.learning_rate, args.weight_decay)
     scheduler = get_lr_scheduler(args.lr_scheduler, optimizer, args.num_train_epochs)
 
@@ -368,11 +450,9 @@ if __name__ == "__main__":
         args.fp16,
         args.push_to_hub
     )
-    import gc
-    #del variables
-    gc.collect()
-    trainer = train_model(model, training_args, tokenizer, dataset['train'], dataset['test'], data_collator, device)
-    #trainer.get_train_dataloader()
+
+    trainer = train_model(model, training_args, tokenizer, train_dataset, valid_dataset, data_collator, device)
+
     torch.cuda.empty_cache()
     trainer.train()
 
