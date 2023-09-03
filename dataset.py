@@ -39,7 +39,7 @@ class FastaDataset(Dataset):
         return {"codon": self.sequences[idx]}
 
 
-class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
+class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
     """Augment the underlying DataCollatorForLanguageModeling to handle
     multiple batch encoding inputs."""
 
