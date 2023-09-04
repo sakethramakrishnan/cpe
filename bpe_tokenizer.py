@@ -13,17 +13,17 @@ from tokenizers.processors import TemplateProcessing
 from tokenizers import (
     decoders,
     models,
-
     processors,
     trainers,
     Tokenizer,
+    BatchEncoding,
 )
 PathLike = Union[str, Path]
 
 
 # Assign a unique character to each codon so that we can use it as an
 # input token to a BPE tokenizer. This implements a codon-pair encoding.
-CODON_CHAR = {
+CODON_TO_CHAR = {
     'TCG': "A", 'GCA': "B", 'CTT': "C", 'ATT': "D", 'TTA': "E", 'GGG': "F", 'CGT': "G",
     'TAA': "H", 'AAA': "I", 'CTC': "J", 'AGT': "K", 'CCA': "L", 'TGT': "M", 'GCC': "N",
     'GTT': "O", 'ATA': "P", 'TAC': "Q", 'TTT': "R", 'TGC': "S", 'CAC': "T", 'ACG': "U",
@@ -36,6 +36,26 @@ CODON_CHAR = {
     'TGA': "@"
 }
 
+CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
+
+def group_and_contextualize(seq: str):
+    return "".join(CODON_TO_CHAR.get(seq[i: i + 3], "") for i in range(0, len(seq), 3))
+
+class CodonBPETokenizer(Tokenizer):
+    """To be used at inference time for convenient DNA sequence encoding/decoding."""
+    def __call__(self, text: Union[str, List[str]], **kwargs)-> BatchEncoding:
+        """Convert the input DNA sequence (no spaces) to codons and then to bytes."""
+        if isinstance(text, str):
+            text = group_and_contextualize(text)
+        else:
+            text = [group_and_contextualize(t) for t in text]
+        return super().__call__(text, **kwargs)
+
+    def decode(*args, **kwargs) -> str:
+        text = super().decode(*args, **kwargs)
+        return "".join(CHAR_TO_CODON.get(c, "") for c in text)
+
+
 def read_fasta_only_seq_iter(fasta_file: PathLike) -> List[str]:
     """Reads fasta file sequences without description tag."""
     text = Path(fasta_file).read_text()
@@ -47,9 +67,6 @@ def read_fasta_only_seq_iter(fasta_file: PathLike) -> List[str]:
     for sequence in lines[1::2]:
         yield sequence
 
-
-def group_and_contextualize(seq: str, k: int = 3):
-    return "".join(CODON_CHAR.get(seq[i: i + k], "") for i in range(0, len(seq), k))
 
 
 class SequenceReader:

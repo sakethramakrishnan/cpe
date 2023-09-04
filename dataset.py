@@ -1,25 +1,10 @@
-import re
-from pathlib import Path
 from typing import Any, Dict, List
 
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
 
+from .bpe_tokenizer import group_and_contextualize, read_fasta_only_seq
 
-def group_codons(seq: str) -> str:
-    return " ".join(seq[i : i + 3] for i in range(0, len(seq), 3)).upper()
-
-def read_fasta_only_seq(fasta_file: str) -> List[str]:
-    """Reads fasta file sequences without description tag."""
-    text = Path(fasta_file).read_text()
-    pattern = re.compile("^>", re.MULTILINE)
-    non_parsed_seqs = re.split(pattern, text)[1:]
-    lines = [
-        line.replace("\n", "")
-        for seq in non_parsed_seqs
-        for line in seq.split("\n", 1)
-    ]
-    return lines[1::2]
 
 class FastaDataset(Dataset):
     def __init__(self, file_path: str) -> None:
@@ -28,15 +13,15 @@ class FastaDataset(Dataset):
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
         self.sequences = [
-            group_codons(seq) for seq in dna_sequenes if len(seq) % 3 == 0
+            group_and_contextualize(seq) for seq in dna_sequenes if len(seq) % 3 == 0
         ]
 
     def __len__(self) -> int:
         return len(self.sequences)
 
-    def __getitem__(self, idx: int) -> Dict[str, str]:
-        # Get the idx'th codon sequence
-        return {"codon": self.sequences[idx]}
+    def __getitem__(self, idx: int) -> str:
+        # Get the idx'th sequence
+        return self.sequences[idx]
 
 
 class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
@@ -56,9 +41,9 @@ class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
             return_special_tokens_mask=self.train_mode and self.mlm,
         )
 
-    def torch_call(self, examples: List[Dict[str, str]]) -> Dict[str, Any]:
+    def torch_call(self, examples: List[str]) -> Dict[str, Any]:
         # First, tokenize the batch
-        batch = self.tokenize([e["codon"] for e in examples])
+        batch = self.tokenize(examples)
 
         # We only need to mask tokens if we are training
         if not self.train_mode:

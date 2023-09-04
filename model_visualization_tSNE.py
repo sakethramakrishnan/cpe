@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 
-CODON_CHAR = {
+CODON_TO_CHAR = {
     'TCG': "A", 'GCA': "B", 'CTT': "C", 'ATT': "D", 'TTA': "E", 'GGG': "F", 'CGT': "G",
     'TAA': "H", 'AAA': "I", 'CTC': "J", 'AGT': "K", 'CCA': "L", 'TGT': "M", 'GCC': "N",
     'GTT': "O", 'ATA': "P", 'TAC': "Q", 'TTT': "R", 'TGC': "S", 'CAC': "T", 'ACG': "U",
@@ -51,7 +51,7 @@ class SequenceDataset(Dataset):  # type: ignore[type-arg]
 
     @staticmethod
     def group_and_contextualize(seq: str, k: int = 3):
-        return "".join(CODON_CHAR.get(seq[i: i + k], "") for i in range(0, len(seq), k))
+        return "".join(CODON_TO_CHAR.get(seq[i: i + k], "") for i in range(0, len(seq), k))
 
     def __len__(self) -> int:
         return len(self.batch_encodings)
