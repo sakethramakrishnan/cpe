@@ -161,6 +161,14 @@ def compute_metrics(eval_preds):
     labels = labels.reshape(predictions.size)
     return metric.compute(predictions=predictions, references=labels)
 
+#def compute_metrics(p):
+ #   metric = evaluate.load("accuracy")
+  #  return metric.compute(
+   #     predictions=np.argmax(p.predictions, axis=1),
+  
+
+  #references=p.label_ids
+    #)
 
 def get_dataset(sequences: List[str], tokenizer: List[transformers.tokenization_utils_fast.PreTrainedTokenizerFast], max_length: int, padding: str, truncation: bool, test_size: float):
     tokenized_seqs = tokenizer(
@@ -340,7 +348,9 @@ def read_fasta_only_seq(fasta_file: str) -> List[str]:
         for seq in non_parsed_seqs
         for line in seq.split("\n", 1)
     ]
-    return lines[1::2]
+    sequences = lines[1::2]
+    sequences = [seq for seq in sequences if len(seq )< 1022*3]
+    return(sequences)
 
 
 class FastaDataset(TypeDataset):
@@ -350,9 +360,9 @@ class FastaDataset(TypeDataset):
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
         self.sequences = [
-            group_codons(seq) for seq in dna_sequenes if len(seq) % 3 == 0
+            bpe_tokenizer.group_and_contextualize(seq) for seq in dna_sequenes if len(seq) % 3 == 0
         ]
-
+        #self.sequences = sequences[0:100]
     def __len__(self) -> int:
         return len(self.sequences)
 
@@ -384,7 +394,8 @@ class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
         # First, tokenize the batch
         #print(examples)
         batch = self.tokenize([e for e in examples])
-
+        #print(batch)
+        #batch = [elem for elem in batch if len(elem) <= 1024]
         # We only need to mask tokens if we are training
         if not self.train_mode:
             return batch
@@ -432,6 +443,11 @@ if __name__ == "__main__":
 
     optimizer = get_optimizer(args.optimizer, args.learning_rate, args.weight_decay)
     scheduler = get_lr_scheduler(args.lr_scheduler, optimizer, args.num_train_epochs)
+    
+    res = sorted(valid_dataset, key=len, reverse=True)[0]
+    res.replace(" ", "")
+    print(res)
+    print(len(res))
 
     training_args = get_training_args(
         args.output_dir,
@@ -452,7 +468,7 @@ if __name__ == "__main__":
     )
 
     trainer = train_model(model, training_args, tokenizer, train_dataset, valid_dataset, data_collator, device)
-
+    del sequences
     torch.cuda.empty_cache()
     trainer.train()
 
