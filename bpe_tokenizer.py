@@ -56,19 +56,6 @@ class CodonBPETokenizer(Tokenizer):
         return "".join(CHAR_TO_CODON.get(c, "") for c in text)
 
 
-def read_fasta_only_seq_iter(fasta_file: PathLike) -> List[str]:
-    """Reads fasta file sequences without description tag."""
-    text = Path(fasta_file).read_text()
-    pattern = re.compile("^>", re.MULTILINE)
-    non_parsed_seqs = re.split(pattern, text)[1:]
-    lines = [
-        line.replace("\n", "") for seq in non_parsed_seqs for line in seq.split("\n", 1)
-    ]
-    for sequence in lines[1::2]:
-        yield sequence
-
-
-
 class SequenceReader:
     def __init__(self, fasta_file: Path) -> None:
 
