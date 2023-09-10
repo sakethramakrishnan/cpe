@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
 
-from .bpe_tokenizer import group_and_contextualize, read_fasta_only_seq
+from bpe_tokenizer import group_and_contextualize, read_fasta_only_seq
 
 
 class FastaDataset(Dataset):
