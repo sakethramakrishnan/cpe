@@ -1,9 +1,8 @@
 import argparse
 
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 from pathlib import Path
-import sys
 import bpe_tokenizer
 import evaluate
 
@@ -11,27 +10,23 @@ import os
 import numpy as np
 
 import torch
-import transformers
-import datasets
 
 from transformers import (
     BertForMaskedLM,
-    AdamW,
     PretrainedConfig,
     PreTrainedTokenizerFast,
-    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
     GPTNeoXForCausalLM,
-    BatchEncoding
 )
 
-from torch.utils.data import random_split, Dataset
-from torch.utils.data import Dataset
-import re
+from torch.utils.data import random_split
 
 from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
+from utils import get_model_no_path
+
+os.environ["WANDB_DISABLED"] = "true"
 def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
 
@@ -162,79 +157,50 @@ def compute_metrics(eval_preds):
     labels = labels.reshape(predictions.size)
     return metric.compute(predictions=predictions, references=labels)
 
-def get_model(tokenizer, model_architecture: Optional = None, model_checkpoint: Optional = None):
+def get_model(tokenizer, model_checkpoint: Optional = None, model_json_path: Optional = None, model_architecture: Optional = None):
     if model_checkpoint:
         model = BertForMaskedLM.from_pretrained(Path(model_checkpoint))
 
-    elif model_architecture:
-
-        if model_architecture == 'bert_3m':
-            arch_path = Path('architectures/bert/bert_3m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
+    elif model_json_path:
+        if "bert" in model_json_path:
+            config = PretrainedConfig.from_json_file(model_json_path)
             config.vocab_size = tokenizer.vocab_size
             config.pad_token_id = tokenizer.pad_token_id
             model = BertForMaskedLM(config)
-
-        elif model_architecture == 'bert_33m':
-            arch_path = Path('architectures/bert/bert_33m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'bert_330m':
-            arch_path = Path('architectures/bert/bert_330m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'neox_3m':
-            arch_path = Path('architectures/neox/neox_3m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
+        elif "neox" in model_json_path:
+            config = PretrainedConfig.from_json_file(model_json_path)
             config.vocab_size = tokenizer.vocab_size
             config.pad_token_id = tokenizer.pad_token_id
             model = GPTNeoXForCausalLM(config)
+        else:
+            raise ValueError('Your model is not a bert or neox model')
 
-        elif model_architecture == 'neox_33m':
-            arch_path = Path('architectures/neox/neox_33m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'neox_330m':
-            arch_path = Path('architectures/neox/neox_330m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
+    elif model_architecture:
+        model = get_model_no_path(tokenizer, model_architecture)
 
     else:
-        raise ValueError('Please provide a valid model architecture in the "model_architecture" argument')
+        raise ValueError(
+            'Please provide either: '
+            'a) a valid model checkpoint in the "model_checkpoint" argument'
+            'b) a path to a json file with the model configuration in the "model_json_path" argument'
+            'c) valid model architecture in the "model_architecture" argument'
+        )
 
     return model
-
-def get_checkpoint_model(model_path: str):
-    model = BertForMaskedLM.from_pretrained(Path(model_path))
-
-    return model
-
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_DISABLED"] = "true"
 
     args = get_args()
 
     # TODO: Assume tokenizer already exists
-    sequences = get_sequences(args.fasta_path)
-    tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
+    #sequences = get_sequences(args.fasta_path)
+    tokenizer = get_tokenizer(args.tokenizer_checkpoint, args.vocab_size)
 
     model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.cuda.empty_cache()
+
     model = model.to(device)
 
     dataset = FastaDataset(file_path=args.fasta_path)
@@ -248,11 +214,7 @@ if __name__ == "__main__":
     train_length = int(np.round(len(dataset) * (1 - args.test_size)))
     lengths = [train_length, len(dataset) - train_length]
     train_dataset, valid_dataset = random_split(dataset, lengths)
-    
-    res = sorted(valid_dataset, key=len, reverse=True)[0]
-    res.replace(" ", "")
-    print(res)
-    print(len(res))
+
 
     training_args = TrainingArguments(
         args.output_dir,
