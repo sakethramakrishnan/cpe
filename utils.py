@@ -103,6 +103,53 @@ def gc_content(seqs: List[str]) -> List[float]:
         GC content of each DNA sequence.
     """
     return [GC(seq) for seq in seqs]
+def check_bases(seq):
+    '''Check that each of the letters in each sequence is of the set{'A', 'T', 'C', 'G'}'''
+    return not any(x not in BASES for x in seq)
+
+def replace_unk(codon_list):
+    for idx, codon in enumerate(codon_list):
+        if not check_bases(codon):
+            codon_list[idx] = 'XXX'
+    return codon_list
+
+def truncate_codon_sequence(sequence):
+    '''If the sequence is not evenly divisible by 3, then we take off %3 bases from the end'''
+    remainder = len(sequence) % 3
+    if remainder != 0:
+        sequence = sequence[:-remainder]
+    return sequence
+
+def seq_to_codon_list(seq: str) -> List[str]:
+    '''split the sequence string into strings of len 3'''
+    return [seq[i:i + 3] for i in range(0, len(seq), 3)]
+
+def format_seq(seq: str) -> str:
+    seq = truncate_codon_sequence(seq)
+    seq = seq_to_codon_list(seq.upper())
+    seq = replace_unk(seq)
+    return(seq)
+
+BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
+CODON_TO_CHAR = {
+    'TCG': "A", 'GCA': "B", 'CTT': "C", 'ATT': "D", 'TTA': "E", 'GGG': "F", 'CGT': "G",
+    'TAA': "H", 'AAA': "I", 'CTC': "J", 'AGT': "K", 'CCA': "L", 'TGT': "M", 'GCC': "N",
+    'GTT': "O", 'ATA': "P", 'TAC': "Q", 'TTT': "R", 'TGC': "S", 'CAC': "T", 'ACG': "U",
+    'CCC': "V", 'ATC': "W", 'CAT': "X", 'AGA': "Y", 'GAG': "Z", 'GTG': "a", 'GGT': "b",
+    'GCT': "c", 'TTC': "d", 'AAC': "e", 'TAT': "f", 'GTA': "g", 'CCG': "h", 'ACA': "i",
+    'CGA': "j", 'TAG': "k", 'CTG': "l", 'GGA': "m", 'ATG': "n", 'TCT': "o", 'CGG': "p",
+    'GAT': "q", 'ACC': "r", 'GAC': "s", 'GTC': "t", 'TGG': "u", 'CCT': "v", 'GAA': "w",
+    'TCA': "x", 'CAA': "y", 'AAT': "z", 'ACT': "0", 'GCG': "1", 'GGC': "2", 'CTA': "3",
+    'AAG': "4", 'AGG': "5", 'CAG': "6", 'AGC': "7", 'CGC': "8", 'TTG': "9", 'TCC': "!",
+    'TGA': "@", 'XXX': "*"
+}
+CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
+
+seq = "atgGhcAhhATGGCCCATTgc"
+codons = (format_seq(seq))
+
+seq = ("".join(CODON_TO_CHAR.get(codon) for codon in codons))
+print(seq)
 
 def get_model_no_path(tokenizer, model_architecture: str):
     if model_architecture == 'bert_3m':
