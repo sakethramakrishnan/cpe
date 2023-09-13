@@ -1,51 +1,43 @@
 import argparse
 
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 from pathlib import Path
-import sys
-import bpe_tokenizer
-import evaluate
 
 import os
 import numpy as np
 
 import torch
-import transformers
-import datasets
 
 from transformers import (
     BertForMaskedLM,
-    AdamW,
     PretrainedConfig,
     PreTrainedTokenizerFast,
-    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
     GPTNeoXForCausalLM,
-    BatchEncoding
 )
 
-from torch.utils.data import random_split, Dataset
-from torch.utils.data import Dataset
-import re
+from torch.utils.data import random_split
 
 from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
+from utils import get_model_no_path
+
+os.environ["WANDB_DISABLED"] = "true"
 
 def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
 
     # Model hyperparameters
-    parser.add_argument('--model_architecture', type=str, default='bert_3m',
-                        help='Path of the Hugging Face model architecture JSON file')
+    parser.add_argument('--model_architecture', type=str, default='bert_3m', help='Path of the Hugging Face model architecture JSON file')
 
     parser.add_argument('--model_checkpoint', type=str, default=None,
                         help='Path to a pre-trained BERT model checkpoint')
 
     # filepath to fasta files:
-    parser.add_argument('--fasta_path', type=Path, default=None,
-                        help='The filepath or folderpath to the .fasta file(s) with sequences')
+    parser.add_argument('--fasta_path', type=Path, default=None, help='The filepath or folderpath to the .fasta file(s) with sequences')
+
 
     # Tokenizer hyperparameters
     parser.add_argument('--tokenizer_checkpoint', type=str, default=None,
@@ -54,7 +46,7 @@ def get_args():
                         help='Whether to pad the inputs')
 
     parser.add_argument('--vocab_size', type=int, default=50_257,
-                        help='The number of elements in the vocabulary of the tokenizer')
+                         help='The number of elements in the vocabulary of the tokenizer')
 
     parser.add_argument('--max_length', type=int, default=1024, help='Maximum input sequence length')
     parser.add_argument('--truncation', type=int, default=True,
@@ -114,12 +106,26 @@ def get_args():
                              'Improves training time and memory requirements, '
                              'but can provoke instability and slight decay of performance. '
                              'NOTE: CAN ONLY BE USED ON CUDA DEVICES')
+    parser.add_argument('--load_best_model_at_end', type=bool_flag, default=True,
+                        help=' Whether or not to load the best model found during training at the end of training. '
+                             'When this option is enabled, the best checkpoint will always be saved')
+    parser.add_argument('--save_total_limit', type=int, default=5,
+                        help='If a value is passed, will limit the total amount of checkpoints. '
+                             'Deletes the older checkpoints in output_dir. '
+                             'When load_best_model_at_end is enabled, the “best” checkpoint according to '
+                             'metric_for_best_model will always be retained in addition to the most recent ones. '
+                             'For example, for save_total_limit=5 and load_best_model_at_end, '
+                             'the four last checkpoints will always be retained alongside the best model. '
+                             'When save_total_limit=1 and load_best_model_at_end, it is possible that two checkpoints are saved: '
+                             'the last one and the best one (if they are different).')
     parser.add_argument('--push_to_hub', type=bool_flag, default=False,
                         help='Whether or not to push the model to the HuggingFace hub')
 
     args = parser.parse_args()
     return args
 
+
+MODEL_DISPATCH = {"GPTNeoXForCausalLM": GPTNeoXForCausalLM, "BertForMaskedLM": BertForMaskedLM, "neox": GPTNeoXForCausalLM, "bert": BertForMaskedLM}
 
 def bool_flag(s):
     """
@@ -134,113 +140,38 @@ def bool_flag(s):
     else:
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
-
-def get_sequences(fasta_path: str):
-    fasta_path = Path(fasta_path)
-    if fasta_path.is_file():
-        sequences = bpe_tokenizer.read_fasta_only_seq(fasta_path)
-        print(len(sequences))
-    else:
-        sequences = bpe_tokenizer.fasta_corpus_iterator(fasta_path)
-
-    sequences = [bpe_tokenizer.group_and_contextualize(seq) for seq in sequences]
-    return sequences
-
-
-def get_tokenizer(sequences: Optional = None, tokenizer_checkpoint: Optional = None, vocab_size: Optional = None):
-    if tokenizer_checkpoint:
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_checkpoint)
-    else:
-        tokenizer = bpe_tokenizer.build_tokenizer(sequences, vocab_size)
-
-    return tokenizer
-
-
-def compute_metrics(eval_preds):
-    metric = evaluate.load("accuracy")
-    logits, labels = eval_preds
-    predictions = np.argmax(logits, axis=-1)
-    predictions = predictions.reshape(predictions.size)
-    labels = labels.reshape(predictions.size)
-    return metric.compute(predictions=predictions, references=labels)
-
-
-def get_model(tokenizer, model_architecture: Optional = None, model_checkpoint: Optional = None):
+def get_model(tokenizer, model_checkpoint: Optional[str] = None, model_json_path: Optional[str] = None, model_architecture: Optional[str] = None):
     if model_checkpoint:
         model = BertForMaskedLM.from_pretrained(Path(model_checkpoint))
 
-    #elif model_path:
-
+    elif model_json_path:
+        config = PretrainedConfig.from_json_file(model_json_path)
+        config.vocab_size = tokenizer.vocab_size
+        config.pad_token_id = tokenizer.pad_token_id
+        model = MODEL_DISPATCH[model_architecture].from_pretrained(args.model_json_path)
 
     elif model_architecture:
-
-        if model_architecture == 'bert_3m':
-            arch_path = Path('architectures/bert/bert_3m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'bert_33m':
-            arch_path = Path('architectures/bert/bert_33m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'bert_330m':
-            arch_path = Path('architectures/bert/bert_330m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'neox_3m':
-            arch_path = Path('architectures/neox/neox_3m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = GPTNeoXForCausalLM(config)
-
-        elif model_architecture == 'neox_33m':
-            arch_path = Path('architectures/neox/neox_33m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
-
-        elif model_architecture == 'neox_330m':
-            arch_path = Path('architectures/neox/neox_330m.json')
-            config = PretrainedConfig.from_json_file(arch_path)
-            config.vocab_size = tokenizer.vocab_size
-            config.pad_token_id = tokenizer.pad_token_id
-            model = BertForMaskedLM(config)
+        model = get_model_no_path(tokenizer, model_architecture)
 
     else:
-        raise ValueError('Please provide a valid model architecture in the "model_architecture" argument')
-
-    return model
-
-
-def get_checkpoint_model(model_path: str):
-    model = BertForMaskedLM.from_pretrained(Path(model_path))
+        raise ValueError(
+            'Please provide either: '
+            'a) a valid model checkpoint in the "model_checkpoint" argument'
+            'b) a path to a json file with the model configuration in the "model_json_path" argument'
+            'c) valid model architecture in the "model_architecture" argument'
+        )
 
     return model
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_DISABLED"] = "true"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     args = get_args()
 
-    # TODO: Assume tokenizer already exists
-    sequences = get_sequences(args.fasta_path)
-    tokenizer = get_tokenizer(sequences, args.tokenizer_checkpoint, args.vocab_size)
+    tokenizer = PreTrainedTokenizerFast.from_pretrained(args.tokenizer_checkpoint)
 
-    model = get_model(tokenizer, args.model_architecture, args.model_checkpoint)
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.cuda.empty_cache()
+    model = get_model(tokenizer, model_checkpoint=args.model_checkpoint, model_architecture=args.model_architecture)
     model = model.to(device)
 
     dataset = FastaDataset(file_path=args.fasta_path)
@@ -251,31 +182,29 @@ if __name__ == "__main__":
         mlm=True,
         mlm_probability=0.15,
     )
+
     train_length = int(np.round(len(dataset) * (1 - args.test_size)))
     lengths = [train_length, len(dataset) - train_length]
     train_dataset, valid_dataset = random_split(dataset, lengths)
 
-    res = sorted(valid_dataset, key=len, reverse=True)[0]
-    res.replace(" ", "")
-    print(res)
-    print(len(res))
-
     training_args = TrainingArguments(
-        args.output_dir,
-        args.per_device_train_batch_size,
-        args.per_device_eval_batch_size,
-        args.evaluation_strategy,
-        args.eval_steps,
-        args.logging_strategy,
-        args.logging_steps,
-        args.gradient_accumulation_steps,
-        args.num_train_epochs,
-        args.weight_decay,
-        args.warmup_steps,
-        args.learning_rate,
-        args.save_steps,
-        args.fp16,
-        args.push_to_hub
+        output_dir=args.output_dir,
+        per_device_train_batch_size=args.per_device_train_batch_size,
+        per_device_eval_batch_size=args.per_device_eval_batch_size,
+        evaluation_strategy=args.evaluation_strategy,
+        eval_steps=args.eval_steps,
+        logging_strategy=args.logging_strategy,
+        logging_steps=args.logging_steps,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        num_train_epochs=args.num_train_epochs,
+        weight_decay=args.weight_decay,
+        warmup_steps=args.warmup_steps,
+        learning_rate=args.learning_rate,
+        save_steps=args.save_steps,
+        fp16=args.fp16,
+        load_best_model_at_end=args.load_best_model_at_end,
+        save_total_limit=args.save_total_limit,
+        push_to_hub=args.push_to_hub
     )
 
     # Build trainer
@@ -285,9 +214,7 @@ if __name__ == "__main__":
         args=training_args,
         data_collator=data_collator,
         train_dataset=train_dataset,
-        eval_dataset=valid_dataset,
-        compute_metrics=compute_metrics
+        eval_dataset=valid_dataset
     )
 
-    # TODO: Save a checkpoint at the very end
     trainer.train()

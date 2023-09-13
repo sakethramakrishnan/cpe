@@ -61,11 +61,9 @@ def seq_to_codon_list(seq: str) -> List[str]:
     '''split the sequence string into strings of len 3'''
     return [seq[i:i + 3] for i in range(0, len(seq), 3)]
 
-def group_and_contextualize(seq: str):
-    seq = truncate_codon_sequence(seq)
-    seq = seq_to_codon_list(seq.upper())
-    seq = replace_invalid_codons(seq)
-    return "".join(CODON_TO_CHAR.get(codon) for codon in seq)
+def group_and_contextualize(seq: str, k: int = 3):
+    return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+
 
 # TODO:"TypeError: type 'tokenizers.Tokenizer' is not an acceptable base type"
 #class CodonBPETokenizer(Tokenizer):

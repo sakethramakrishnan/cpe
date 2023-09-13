@@ -25,6 +25,8 @@ class Sequence(BaseModel):
     tag: str
     """Sequence description tag."""
 
+BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
+
 def read_fasta(fasta_file: PathLike) -> List[Sequence]:
     """Reads fasta file sequences and description tags into dataclass."""
     text = Path(fasta_file).read_text()
@@ -41,14 +43,15 @@ def read_fasta(fasta_file: PathLike) -> List[Sequence]:
 def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
-def filter_sequences_by_gc(dna_sequences):
+def filter_sequences_by_gc_and_bases(dna_sequences: List[List[str]]) -> List[str]:
     ''' all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences '''
-    valid_inds = []
-    for i, sequence in enumerate(dna_sequences):
-        gc_content = GC(sequence[0])
-        if gc_content > 0. and  gc_content < 100. and len(sequence[0])>=3:
-            valid_inds.append(i)
-    return valid_inds
+    refined_sequences = []
+    for i, seq in enumerate(dna_sequences):
+        gc_content = GC(seq)
+        if gc_content > 0. and  gc_content < 100. and len(seq)>=3 and check_bases(seq):
+            refined_sequences.append(dna_sequences[i])
+
+    return refined_sequences
 
 def parse_sequence_labels(sequences: List[Sequence]) -> List[str]:
     pattern = r'gbkey=([^;]+)'
@@ -56,6 +59,17 @@ def parse_sequence_labels(sequences: List[Sequence]) -> List[str]:
     labels = [match.group(1) if match else "" for match in matches]
     return labels
 
+def find_invalid_seqs(dna_sequences: List[List[str]]) -> List[str]:
+    ''' all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences '''
+    bad_sequences = []
+    bad_indices = []
+    for i, seq in enumerate(dna_sequences):
+        gc_content = GC(seq)
+        if gc_content == 0. or  gc_content == 100. or not check_bases(seq) and len(seq)>=3:
+            bad_sequences.append(dna_sequences[i])
+            bad_indices.append(i)
+
+    return bad_sequences, bad_indices
 
 def preprocess_data(sequences: List[Sequence], labels: List[Sequence], per_of_each_class=1.0):
     # Note: This function modifies sequences and labels
