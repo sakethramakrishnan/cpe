@@ -26,6 +26,8 @@ from utils import get_model_no_path
 
 os.environ["WANDB_DISABLED"] = "true"
 
+MODEL_DISPATCH = {"GPTNeoXForCausalLM": GPTNeoXForCausalLM, "BertForMaskedLM": BertForMaskedLM, "neox": GPTNeoXForCausalLM, "bert": BertForMaskedLM}
+
 def get_args():
     parser = argparse.ArgumentParser(description="Parameters for our model")
 
@@ -124,8 +126,6 @@ def get_args():
     args = parser.parse_args()
     return args
 
-
-MODEL_DISPATCH = {"GPTNeoXForCausalLM": GPTNeoXForCausalLM, "BertForMaskedLM": BertForMaskedLM, "neox": GPTNeoXForCausalLM, "bert": BertForMaskedLM}
 
 def bool_flag(s):
     """
