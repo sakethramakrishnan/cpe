@@ -1,17 +1,11 @@
 import argparse
-
-from typing import Optional
-
 from pathlib import Path
 
 import os
 import numpy as np
 
-import torch
-
 from transformers import (
     BertForMaskedLM,
-    PretrainedConfig,
     PreTrainedTokenizerFast,
     Trainer,
     TrainingArguments,
@@ -141,15 +135,12 @@ def bool_flag(s):
 
 
 if __name__ == "__main__":
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
     args = get_args()
 
     tokenizer = PreTrainedTokenizerFast.from_pretrained(args.tokenizer_checkpoint)
 
     # Either the path to a model checkpoint or the path to a json file with the model configuration.
     model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_checkpoint)
-    model = model.to(device)
 
     dataset = FastaDataset(file_path=args.fasta_path)
 
