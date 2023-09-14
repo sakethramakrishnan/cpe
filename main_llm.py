@@ -22,7 +22,6 @@ from torch.utils.data import random_split
 
 from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
-from utils import get_model_no_path
 
 os.environ["WANDB_DISABLED"] = "true"
 
@@ -140,29 +139,6 @@ def bool_flag(s):
     else:
         raise argparse.ArgumentTypeError("invalid value for a boolean flag")
 
-def get_model(tokenizer, model_checkpoint: Optional[str] = None, model_json_path: Optional[str] = None, model_architecture: Optional[str] = None):
-    if model_checkpoint:
-        model = BertForMaskedLM.from_pretrained(Path(model_checkpoint))
-
-    elif model_json_path:
-        config = PretrainedConfig.from_json_file(model_json_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = MODEL_DISPATCH[model_architecture].from_pretrained(args.model_json_path)
-
-    elif model_architecture:
-        model = get_model_no_path(tokenizer, model_architecture)
-
-    else:
-        raise ValueError(
-            'Please provide either: '
-            'a) a valid model checkpoint in the "model_checkpoint" argument'
-            'b) a path to a json file with the model configuration in the "model_json_path" argument'
-            'c) valid model architecture in the "model_architecture" argument'
-        )
-
-    return model
-
 
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -171,7 +147,8 @@ if __name__ == "__main__":
 
     tokenizer = PreTrainedTokenizerFast.from_pretrained(args.tokenizer_checkpoint)
 
-    model = get_model(tokenizer, model_checkpoint=args.model_checkpoint, model_architecture=args.model_architecture)
+    # Either the path to a model checkpoint or the path to a json file with the model configuration.
+    model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_checkpoint)
     model = model.to(device)
 
     dataset = FastaDataset(file_path=args.fasta_path)

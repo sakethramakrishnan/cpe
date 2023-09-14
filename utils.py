@@ -145,56 +145,6 @@ def format_seq(seq: str) -> str:
     return(seq)
 
 
-
-def get_model_no_path(tokenizer, model_architecture: str):
-    if model_architecture == 'bert_3m':
-        arch_path = Path('architectures/bert/bert_3m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'bert_33m':
-        arch_path = Path('architectures/bert/bert_33m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'bert_330m':
-        arch_path = Path('architectures/bert/bert_330m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'neox_3m':
-        arch_path = Path('architectures/neox/neox_3m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = GPTNeoXForCausalLM(config)
-
-    elif model_architecture == 'neox_33m':
-        arch_path = Path('architectures/neox/neox_33m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    elif model_architecture == 'neox_330m':
-        arch_path = Path('architectures/neox/neox_330m.json')
-        config = PretrainedConfig.from_json_file(arch_path)
-        config.vocab_size = tokenizer.vocab_size
-        config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(config)
-
-    else:
-        raise ValueError('Please provide a valid model architecture in the "model_architecture" argument')
-
-    return model
-
-
 def get_label_dict(labels: List[str]):
     '''
     label_dict: a dictwhere
