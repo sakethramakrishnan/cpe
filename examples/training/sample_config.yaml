@@ -1,0 +1,15 @@
+num_train_epochs: 50
+per_device_train_batch_size: 32
+per_device_eval_batch_size: 64
+evaluation_strategy: steps
+eval_steps: 100
+logging_strategy: steps
+logging_steps: 500
+weight_decay: 0.01
+warmup_steps: 1000
+learning_rate: .00005
+save_steps: 500
+load_best_model_at_end: True
+save_total_limit: 5
+fp16: False
+train_path: "/home/couchbucks/Downloads/all_fasta_files/training"

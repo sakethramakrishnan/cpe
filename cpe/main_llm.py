@@ -1,17 +1,24 @@
-import argparse
+from argparse import ArgumentParser
 import os
 from pathlib import Path
 
-import numpy as np
 from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
-from torch.utils.data import random_split
+
+from transformers.trainer_utils import get_last_checkpoint
+
 from transformers import (
     BertForMaskedLM,
     GPTNeoXForCausalLM,
     PreTrainedTokenizerFast,
     Trainer,
     TrainingArguments,
+    PretrainedConfig
 )
+
+import wandb
+import yaml
+from dataclasses import asdict, dataclass
+import json
 
 os.environ["WANDB_DISABLED"] = "true"
 
@@ -22,194 +29,112 @@ MODEL_DISPATCH = {
     "bert": BertForMaskedLM,
 }
 
+def is_json_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            json.load(file)
+        return True
+    except (json.JSONDecodeError, FileNotFoundError):
+        return False
 
-def get_args():
-    parser = argparse.ArgumentParser(description="Parameters for our model")
 
-    # Model hyperparameters
-    parser.add_argument(
-        "--model_architecture",
-        type=str,
-        default="bert_3m",
-        help="Path of the Hugging Face model architecture JSON file",
-    )
+@dataclass
+class GenSLMTrainingConfig:
+    num_train_epochs: int = 20
+    per_device_train_batch_size: int = 64
+    per_device_eval_batch_size: int = 128
+    gradient_accumulation_steps: int = 2
+    tokenizer_path: str = "/home/couchbucks/Documents/saketh/LLM_sequences/test_tokenizer"
+    output_dir: str = "bpe_llm_out"
+    train_path: str = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
+    validation_path: str = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
+    evaluation_strategy: str = 'steps'
+    eval_steps: int = 100
+    logging_strategy: str = 'steps'
+    logging_steps: int = 500
+    weight_decay: float = 0.01
+    warmup_steps: int = 1000
+    # NOTE: in the yaml file and the python file, DO NOT represent lr using scientific notation
+    learning_rate: float = .00005
+    save_steps: int = 500
+    load_best_model_at_end: bool = True
+    save_total_limit: int = 5
+    # train_path: str = "/lambda_stor/homes/khippe/genslm_foundation/genome_data/curriculum_datasets/curriculum_2/curriculum_2_train.h5"
+    wandb_project: str = ""  # Set to empty string to turn off wandb
+    fp16: bool = True
 
-    parser.add_argument(
-        "--model_checkpoint",
-        type=str,
-        default=None,
-        help="Path to a pre-trained BERT model checkpoint",
-    )
+    def __post_init__(self):
 
-    # filepath to fasta files:
-    parser.add_argument(
-        "--fasta_path",
-        type=Path,
-        default=None,
-        help="The filepath or folderpath to the .fasta file(s) with sequences",
-    )
+        # Setting this environment variable enables wandb logging
+        if self.wandb_project:
+            os.environ["WANDB_PROJECT"] = self.wandb_project
+            # Only resume a run if the output path already exists
+            resume = os.path.exists(self.output_dir)
+            Path(self.output_dir).mkdir(exist_ok=True, parents=True)
+            wandb.init(dir=self.output_dir, resume=resume)
+            wandb.config.update({"train_config": asdict(self)})
 
-    # Tokenizer hyperparameters
-    parser.add_argument(
-        "--tokenizer_checkpoint",
-        type=str,
-        default=None,
-        help="Path to a pre-trained tokenizer checkpoint",
-    )
+        # Create the output directory if it doesn't exist
+        Path(self.output_dir).mkdir(exist_ok=True, parents=True)
 
-    parser.add_argument(
-        "--test_size",
-        type=float,
-        default=0.2,
-        help="Percentage of dataset reserved for testing, expressed as a decimal.",
-    )
+        # Log the config to a yaml file
+        with open(os.path.join(self.output_dir, "train_config.yaml"), "w") as fp:
+            yaml.dump(asdict(self), fp)
 
-    # Arguments used for training:
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default="bpe_llm_out",
-        help="Path where to save visualizations.",
-    )
-    parser.add_argument(
-        "--per_device_train_batch_size",
-        default=64,
-        type=int,
-        help="Per-GPU training batch-size : number of distinct sequences loaded on one GPU during training.",
-    )
-    parser.add_argument(
-        "--per_device_eval_batch_size",
-        default=64,
-        type=int,
-        help="Per-GPU evaluation batch-size : number of distinct sequences loaded on one GPU during testing.",
-    )
-    parser.add_argument(
-        "--evaluation_strategy",
-        type=str,
-        default="steps",
-        choices=["no", "epoch", "steps"],
-        help="Whether to evaluate the model after epochs, or steps",
-    )
-    parser.add_argument(
-        "--eval_steps",
-        type=int,
-        default=100,
-        help="If evaluation_strategy=steps, after x steps in training, evaluate the model",
-    )
-    parser.add_argument(
-        "--logging_strategy",
-        type=str,
-        default="steps",
-        choices=["no", "epoch", "steps"],
-        help="Log after each epoch, steps, or not log at all",
-    )
-    parser.add_argument(
-        "--logging_steps",
-        type=int,
-        default=100,
-        help="If logging_strategy=steps, after x steps in training, log the model",
-    )
-    parser.add_argument(
-        "--gradient_accumulation_steps",
-        type=int,
-        default=2,
-        help="Number of updates steps to accumulate the gradients for, before performing a backward/update pass",
-    )
-    parser.add_argument(
-        "--num_train_epochs",
-        default=100,
-        type=int,
-        help="Number of epochs of training.",
-    )
-    parser.add_argument(
-        "--weight_decay",
-        type=float,
-        default=0.01,
-        help="Weight decay for regularization",
-    )
-    parser.add_argument(
-        "--warmup_steps",
-        type=int,
-        default=1000,
-        help="Number of steps used for a linear warmup from 0 to learning_rate",
-    )
-    parser.add_argument(
-        "--learning_rate",
-        type=float,
-        default=5e-5,
-        help="The initial learning rate for AdamW optimizer",
-    )
-    parser.add_argument(
-        "--save_steps",
-        type=int,
-        default=500,
-        help='Number of updates steps before two checkpoint saves if save_strategy="steps"',
-    )
-    parser.add_argument(
-        "--fp16",
-        type=bool_flag,
-        default=True,
-        help="Whether or not to use half precision for training. "
-        "Improves training time and memory requirements, "
-        "but can provoke instability and slight decay of performance. "
-        "NOTE: CAN ONLY BE USED ON CUDA DEVICES",
-    )
-    parser.add_argument(
-        "--load_best_model_at_end",
-        type=bool_flag,
-        default=True,
-        help=" Whether or not to load the best model found during training at the end of training. "
-        "When this option is enabled, the best checkpoint will always be saved",
-    )
-    parser.add_argument(
-        "--save_total_limit",
-        type=int,
-        default=5,
-        help="If a value is passed, will limit the total amount of checkpoints. "
-        "Deletes the older checkpoints in output_dir. "
-        "When load_best_model_at_end is enabled, the “best” checkpoint according to "
-        "metric_for_best_model will always be retained in addition to the most recent ones. "
-        "For example, for save_total_limit=5 and load_best_model_at_end, "
-        "the four last checkpoints will always be retained alongside the best model. "
-        "When save_total_limit=1 and load_best_model_at_end, it is possible that two checkpoints are saved: "
-        "the last one and the best one (if they are different).",
-    )
-    parser.add_argument(
-        "--push_to_hub",
-        type=bool_flag,
-        default=False,
-        help="Whether or not to push the model to the HuggingFace hub",
-    )
+    def construct_dataset(self, file_path: str) -> FastaDataset:
+        return FastaDataset(file_path=file_path)
+
+def main():
+    # Parse a yaml file to get the training config
+    parser = ArgumentParser()
+    parser.add_argument("--config", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/whole_git/cpe/examples/training/sample_config.yaml')
+    parser.add_argument("--model_architecture", type=str, required=False, default='bert')
+    parser.add_argument("--model_path", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/whole_git/cpe/architectures/bert/bert_3m.json')
 
     args = parser.parse_args()
-    return args
+    with open(args.config) as fp:
+        config = GenSLMTrainingConfig(**yaml.safe_load(fp))
 
-
-def bool_flag(s):
-    """
-    Parse boolean arguments from the command line.
-    """
-    FALSY_STRINGS = {"off", "false", "0"}
-    TRUTHY_STRINGS = {"on", "true", "1"}
-    if s.lower() in FALSY_STRINGS:
-        return False
-    elif s.lower() in TRUTHY_STRINGS:
-        return True
-    else:
-        raise argparse.ArgumentTypeError("invalid value for a boolean flag")
-
-
-if __name__ == "__main__":
-    args = get_args()
-
-    tokenizer = PreTrainedTokenizerFast.from_pretrained(args.tokenizer_checkpoint)
-
-    # Either the path to a model checkpoint or the path to a json file with the model configuration.
-    model = MODEL_DISPATCH[args.model_architecture].from_pretrained(
-        args.model_checkpoint
+    training_args = TrainingArguments(
+        output_dir=config.output_dir,
+        per_device_train_batch_size=config.per_device_train_batch_size,
+        per_device_eval_batch_size=config.per_device_eval_batch_size,
+        evaluation_strategy=config.evaluation_strategy,
+        eval_steps=config.eval_steps,
+        logging_strategy=config.logging_strategy,
+        logging_steps=config.logging_steps,
+        gradient_accumulation_steps=config.gradient_accumulation_steps,
+        num_train_epochs=config.num_train_epochs,
+        weight_decay=config.weight_decay,
+        warmup_steps=config.warmup_steps,
+        learning_rate=config.learning_rate,
+        save_steps=config.save_steps,
+        fp16=config.fp16,
+        load_best_model_at_end=config.load_best_model_at_end,
+        save_total_limit=config.save_total_limit,
+        push_to_hub=False,
     )
 
-    dataset = FastaDataset(file_path=args.fasta_path)
+    tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+
+    if is_json_file(args.model_path):
+        model_config = PretrainedConfig.from_json_file(args.model_path)
+        model_config.vocab_size = tokenizer.vocab_size
+        model_config.pad_token_id = tokenizer.pad_token_id
+        model = BertForMaskedLM(model_config)
+
+    else:
+        model = MODEL_DISPATCH[args.model_architecture].from_pretrained(Path(args.model_path))
+
+
+    # train_dataset = GenSLMTrainingConfig.construct_dataset(file_path=config.train_path)
+    # eval_dataset = GenSLMTrainingConfig.construct_dataset(file_path=config.validation_path)
+
+    train_dataset = FastaDataset(config.train_path)
+    eval_dataset = FastaDataset(config.validation_path)
+
+    # If the number of tokens in the tokenizer is different from the number of tokens
+    # in the model resize the input embedding layer and the MLM prediction head
 
     data_collator = GenSLMCollatorForLanguageModeling(
         train_mode=True,
@@ -218,38 +143,23 @@ if __name__ == "__main__":
         mlm_probability=0.15,
     )
 
-    train_length = int(np.round(len(dataset) * (1 - args.test_size)))
-    lengths = [train_length, len(dataset) - train_length]
-    train_dataset, valid_dataset = random_split(dataset, lengths)
-
-    training_args = TrainingArguments(
-        output_dir=args.output_dir,
-        per_device_train_batch_size=args.per_device_train_batch_size,
-        per_device_eval_batch_size=args.per_device_eval_batch_size,
-        evaluation_strategy=args.evaluation_strategy,
-        eval_steps=args.eval_steps,
-        logging_strategy=args.logging_strategy,
-        logging_steps=args.logging_steps,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        num_train_epochs=args.num_train_epochs,
-        weight_decay=args.weight_decay,
-        warmup_steps=args.warmup_steps,
-        learning_rate=args.learning_rate,
-        save_steps=args.save_steps,
-        fp16=True,
-        load_best_model_at_end=args.load_best_model_at_end,
-        save_total_limit=args.save_total_limit,
-        push_to_hub=False,
-    )
-
-    # Build trainer
     trainer = Trainer(
         model=model,
         tokenizer=tokenizer,
         args=training_args,
         data_collator=data_collator,
         train_dataset=train_dataset,
-        eval_dataset=valid_dataset,
+        eval_dataset=eval_dataset,
     )
 
-    trainer.train()
+
+    checkpoint = get_last_checkpoint(config.output_dir)
+    if checkpoint is not None:
+        print("Training from checkpoint:", checkpoint)
+
+    trainer.train(resume_from_checkpoint=checkpoint)
+
+
+if __name__ == "__main__":
+    main()
+

@@ -196,6 +196,12 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
     return lines[1::2]
 
+def read_fasta_dir(fasta_dir_file: PathLike) -> List[str]:
+    sequences_raw = []
+    for p in Path(fasta_dir_file).glob("*.fasta"):
+        sequences_raw.extend(read_fasta_only_seq(p))
+    return sequences_raw
+
 
 def fasta_corpus_iterator(fasta_folder: Union[Path, List[Path]]):
     """Iterates over a set of fasta files one sequence at a time.
