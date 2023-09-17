@@ -129,9 +129,7 @@ class ModelSettings(BaseSettings):
 
     # data settings
     tokenizer_file: Path = (
-        Path(cpe.__file__).parent
-        / "tokenizer_files"
-        / "pgfam_30k_all_vocab_50257.json"
+        Path(cpe.__file__).parent / "tokenizer_files" / "pgfam_30k_all_vocab_50257.json"
     )
     """Path to the tokenizer file."""
     train_file: Path

@@ -1,21 +1,24 @@
 from typing import Any, Dict, List
 
+from bpe_tokenizer import group_and_contextualize, read_fasta_only_seq, read_fasta_dir
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
-
-from bpe_tokenizer import group_and_contextualize, read_fasta_only_seq
 from utils import filter_sequences_by_gc_and_bases
+
+import os
+
 
 class FastaDataset(Dataset):
     def __init__(self, file_path: str) -> None:
         # Read the fasta file
-        dna_sequences = read_fasta_only_seq(file_path)
+        if os.path.isdir(file_path):
+            dna_sequences = read_fasta_dir(file_path)
+        elif os.path.isfile(file_path):
+            dna_sequences = read_fasta_only_seq(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
         dna_sequences = filter_sequences_by_gc_and_bases(dna_sequences)
-        self.sequences = [
-            group_and_contextualize(seq) for seq in dna_sequences
-        ]
+        self.sequences = [group_and_contextualize(seq) for seq in dna_sequences]
 
     def __len__(self) -> int:
         return len(self.sequences)
@@ -40,7 +43,7 @@ class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
             truncation=True,
             padding=True,
             return_special_tokens_mask=self.train_mode and self.mlm,
-            max_length=1024
+            max_length=1024,
         )
 
     def torch_call(self, examples: List[str]) -> Dict[str, Any]:
