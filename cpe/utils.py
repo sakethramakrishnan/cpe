@@ -1,7 +1,11 @@
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import List, Union
 
+import glob
+import queue
+
+import threading
 PathLike = Union[str, Path]
 
 import random
@@ -10,7 +14,12 @@ from collections import Counter, defaultdict
 
 from Bio.SeqUtils import GC
 from pydantic import BaseModel
-from transformers import BertForMaskedLM, GPTNeoXForCausalLM, PretrainedConfig
+import os
+
+import tqdm
+from bpe_tokenizer import group_and_contextualize
+
+import time
 
 
 class Sequence(BaseModel):
@@ -89,7 +98,7 @@ def preprocess_data(
         ["mRNA", "tRNA", "RNA", "exon", "misc_RNA", "rRNA", "CDS", "ncRNA"]
     )
     valid_inds_labels = [i for i, label in enumerate(labels) if label in valid_labels]
-    valid_inds_sequences = filter_sequences_by_gc(sequences)
+    valid_inds_sequences = filter_sequences_by_gc_and_bases(sequences)
     valid_inds = intersection(valid_inds_labels, valid_inds_sequences)
     sequences = [sequences[ind] for ind in valid_inds]
     labels = [labels[ind] for ind in valid_inds]
@@ -170,7 +179,7 @@ def format_seq(seq: str) -> str:
 
 def get_label_dict(labels: List[str]):
     """
-    label_dict: a dictwhere
+    label_dict: a dict where
     Key (str): Value(int) is each_category_of_label:a_corresponding_number_between_0_and_len(label_categories)
     len = len(label_categories)
     """
@@ -182,3 +191,119 @@ def get_label_dict(labels: List[str]):
     return label_dict
 
     return model
+
+
+BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
+
+
+def check_bases(seq):
+    """Check that each of the letters in each sequence is of the set{'A', 'T', 'C', 'G'}"""
+    return not any(x not in BASES for x in seq)
+
+
+def replace_invalid_codons(codon_list):
+    for idx, codon in enumerate(codon_list):
+        if not check_bases(codon):
+            codon_list[idx] = "XXX"
+    return codon_list
+
+
+def truncate_codon_sequence(sequence):
+    """If the sequence is not evenly divisible by 3, then we take off %3 bases from the end"""
+    remainder = len(sequence) % 3
+    if remainder != 0:
+        sequence = sequence[:-remainder]
+    return sequence
+
+
+def seq_to_codon_list(seq: str) -> List[str]:
+    """split the sequence string into strings of len 3"""
+    return [seq[i : i + 3] for i in range(0, len(seq), 3)]
+
+def fasta_corpus_iterator(fasta_folder: Union[Path, List[Path]]):
+    """Iterates over a set of fasta files one sequence at a time.
+
+    Note: Does not skip any sequences, if a sequence length is not
+    divisible by 3, it is truncated.
+    """
+    # fasta_files = []
+    # fasta_folder = [fasta_folder] if isinstance(fasta_folder, Path) else fasta_folder
+    # for p in Path(fasta_folder).glob("*.fasta"):
+    #     fasta_files.extend(p)
+    print("Reading sequences")
+    for file in glob.iglob(f"{fasta_folder}/*"):
+        for sequence in tqdm(SequenceReader(file)):
+            return sequence
+
+
+class SequenceReader:
+    def __init__(self, fasta_file: Path) -> None:
+
+        self.finished = False
+        self.queue = queue.Queue()
+        self.thread = threading.Thread(
+            target=self.read_fasta, args=(fasta_file,), daemon=True
+        )
+        self.thread.start()
+
+    def read_fasta(self, fasta_file: Path):
+        """Reads sequences one by one from a fasta file and yields the result"""
+        current_sequence = []
+        with open(fasta_file, "r") as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith(">"):
+                    # Edge case at the start of the file
+                    if current_sequence:
+                        sequence = group_and_contextualize(
+                            "".join(current_sequence).upper()
+                        )
+                        self.queue.put(sequence)
+                        current_sequence = []
+                else:
+                    current_sequence.append(line)
+
+            # Edge case for the final sequence
+            if current_sequence:
+                sequence = group_and_contextualize("".join(current_sequence).upper())
+                self.queue.put(sequence)
+
+        self.finished = True
+
+    def __iter__(self):
+        i = 0
+        while not (self.finished and self.queue.empty()):
+            try:
+                yield self.queue.get_nowait()
+            except queue.Empty:
+                time.sleep(1)  # Wait a second for the queue to fill
+                continue
+
+            i += 1
+            if i % 50000 == 0:
+                print(f"Qsize: {self.queue.qsize()}")
+
+
+def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
+    """Reads fasta file sequences without description tag."""
+    text = Path(fasta_file).read_text()
+    pattern = re.compile("^>", re.MULTILINE)
+    non_parsed_seqs = re.split(pattern, text)[1:]
+    lines = [
+        line.replace("\n", "") for seq in non_parsed_seqs for line in seq.split("\n", 1)
+    ]
+
+    return lines[1::2]
+
+def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
+    if os.path.isdir(fasta_file):
+        sequences_raw = []
+        for p in Path(fasta_file).glob("*.fasta"):
+            sequences_raw.extend(read_fasta_only_seq(p))
+    elif os.path.isfile(fasta_file):
+        sequences_raw = read_fasta_only_seq(fasta_file)
+    else:
+        raise ValueError("Kindly enter a filepath to a directory containing many .fasta files "
+                         "or a filepath to a single .fasta file")
+
+    return sequences_raw

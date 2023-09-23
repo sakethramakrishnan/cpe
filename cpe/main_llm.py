@@ -59,7 +59,6 @@ class GenSLMTrainingConfig:
     save_steps: int = 500
     load_best_model_at_end: bool = True
     save_total_limit: int = 5
-    # train_path: str = "/lambda_stor/homes/khippe/genslm_foundation/genome_data/curriculum_datasets/curriculum_2/curriculum_2_train.h5"
     wandb_project: str = ""  # Set to empty string to turn off wandb
     fp16: bool = True
 
@@ -81,8 +80,6 @@ class GenSLMTrainingConfig:
         with open(os.path.join(self.output_dir, "train_config.yaml"), "w") as fp:
             yaml.dump(asdict(self), fp)
 
-    def construct_dataset(self, file_path: str) -> FastaDataset:
-        return FastaDataset(file_path=file_path)
 
 def main():
     # Parse a yaml file to get the training config
@@ -126,9 +123,6 @@ def main():
     else:
         model = MODEL_DISPATCH[args.model_architecture].from_pretrained(Path(args.model_path))
 
-
-    # train_dataset = GenSLMTrainingConfig.construct_dataset(file_path=config.train_path)
-    # eval_dataset = GenSLMTrainingConfig.construct_dataset(file_path=config.validation_path)
 
     train_dataset = FastaDataset(config.train_path)
     eval_dataset = FastaDataset(config.validation_path)

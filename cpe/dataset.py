@@ -1,9 +1,9 @@
 from typing import Any, Dict, List
 
-from bpe_tokenizer import group_and_contextualize, read_fasta_only_seq, read_fasta_dir
+from bpe_tokenizer import group_and_contextualize
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
-from utils import filter_sequences_by_gc_and_bases
+from utils import filter_sequences_by_gc_and_bases, any_file_fasta_reader
 
 import os
 
@@ -11,10 +11,7 @@ import os
 class FastaDataset(Dataset):
     def __init__(self, file_path: str) -> None:
         # Read the fasta file
-        if os.path.isdir(file_path):
-            dna_sequences = read_fasta_dir(file_path)
-        elif os.path.isfile(file_path):
-            dna_sequences = read_fasta_only_seq(file_path)
+        dna_sequences = any_file_fasta_reader(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
         dna_sequences = filter_sequences_by_gc_and_bases(dna_sequences)
