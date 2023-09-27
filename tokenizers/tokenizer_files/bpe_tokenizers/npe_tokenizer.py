@@ -99,6 +99,6 @@ if __name__ == "__main__":
     sequences_training = any_file_fasta_reader(sequence_file)
     sequences_testing = any_file_fasta_reader(sequence_file_testing)
     sequences = sequences_testing + sequences_testing
-    sequences = [seq for seq in sequences if len(seq)>=0]
+    sequences = [seq for seq in sequences if len(seq)>=3]
     tokenizer = build_tokenizer(sequences, vocab_size=50_257, save=True)
     print("Tokenizer build time:", time.time() - start)
