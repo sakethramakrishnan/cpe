@@ -17,7 +17,6 @@ from pydantic import BaseModel
 import os
 
 import tqdm
-from bpe_tokenizer import group_and_contextualize
 
 import time
 
@@ -27,10 +26,78 @@ class Sequence(BaseModel):
     """Biological sequence (Nucleotide sequence)."""
     tag: str
     """Sequence description tag."""
-
+CODON_TO_CHAR = {
+    "TCG": "A",
+    "GCA": "B",
+    "CTT": "C",
+    "ATT": "D",
+    "TTA": "E",
+    "GGG": "F",
+    "CGT": "G",
+    "TAA": "H",
+    "AAA": "I",
+    "CTC": "J",
+    "AGT": "K",
+    "CCA": "L",
+    "TGT": "M",
+    "GCC": "N",
+    "GTT": "O",
+    "ATA": "P",
+    "TAC": "Q",
+    "TTT": "R",
+    "TGC": "S",
+    "CAC": "T",
+    "ACG": "U",
+    "CCC": "V",
+    "ATC": "W",
+    "CAT": "X",
+    "AGA": "Y",
+    "GAG": "Z",
+    "GTG": "a",
+    "GGT": "b",
+    "GCT": "c",
+    "TTC": "d",
+    "AAC": "e",
+    "TAT": "f",
+    "GTA": "g",
+    "CCG": "h",
+    "ACA": "i",
+    "CGA": "j",
+    "TAG": "k",
+    "CTG": "l",
+    "GGA": "m",
+    "ATG": "n",
+    "TCT": "o",
+    "CGG": "p",
+    "GAT": "q",
+    "ACC": "r",
+    "GAC": "s",
+    "GTC": "t",
+    "TGG": "u",
+    "CCT": "v",
+    "GAA": "w",
+    "TCA": "x",
+    "CAA": "y",
+    "AAT": "z",
+    "ACT": "0",
+    "GCG": "1",
+    "GGC": "2",
+    "CTA": "3",
+    "AAG": "4",
+    "AGG": "5",
+    "CAG": "6",
+    "AGC": "7",
+    "CGC": "8",
+    "TTG": "9",
+    "TCC": "!",
+    "TGA": "@",
+    "XXX": "*",
+}
 
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
+def group_and_contextualize(seq: str, k: int = 3):
+    return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
 
 def read_fasta(fasta_file: PathLike) -> List[Sequence]:
     """Reads fasta file sequences and description tags into dataclass."""
