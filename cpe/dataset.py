@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from bpe_tokenizer import group_and_contextualize
+from utils import group_and_contextualize
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
 from utils import filter_sequences_by_gc_and_bases, any_file_fasta_reader

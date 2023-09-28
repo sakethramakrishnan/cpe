@@ -19,7 +19,8 @@ import wandb
 import yaml
 from dataclasses import asdict, dataclass
 import json
-
+from tokenizers import Tokenizer
+from os.path import dirname
 os.environ["WANDB_DISABLED"] = "true"
 
 MODEL_DISPATCH = {
@@ -84,9 +85,9 @@ class GenSLMTrainingConfig:
 def main():
     # Parse a yaml file to get the training config
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/whole_git/cpe/examples/training/sample_config.yaml')
+    parser.add_argument("--config", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml')
     parser.add_argument("--model_architecture", type=str, required=False, default='bert')
-    parser.add_argument("--model_path", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/whole_git/cpe/architectures/bert/bert_3m.json')
+    parser.add_argument("--model_path", type=str, required=False, default='bert/bert_3m.json')
 
     args = parser.parse_args()
     with open(args.config) as fp:
@@ -111,8 +112,17 @@ def main():
         save_total_limit=config.save_total_limit,
         push_to_hub=False,
     )
+    # TODO: Figure out why we are unable to load the tokenizer using json
+    if os.path.isfile(config.tokenizer_path):
+        # tokenizer = PreTrainedTokenizerFast(
+        #     tokenizer_object=Tokenizer.from_file(config.tokenizer_path),
+        # )
+        tokenizer = PreTrainedTokenizerFast(tokenizer_file=config.tokenizer_path)
+        print('inside')
+    else:
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
-    tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+    print(tokenizer)
 
     if is_json_file(args.model_path):
         model_config = PretrainedConfig.from_json_file(args.model_path)
@@ -121,7 +131,7 @@ def main():
         model = BertForMaskedLM(model_config)
 
     else:
-        model = MODEL_DISPATCH[args.model_architecture].from_pretrained(Path(args.model_path))
+        model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_path)
 
 
     train_dataset = FastaDataset(config.train_path)
