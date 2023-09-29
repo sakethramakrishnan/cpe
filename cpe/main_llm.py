@@ -62,6 +62,8 @@ class GenSLMTrainingConfig:
     save_total_limit: int = 5
     wandb_project: str = ""  # Set to empty string to turn off wandb
     fp16: bool = True
+    convert_to_aa: bool = False  # whether to translate the DNA sequence into protein alphabets
+    num_char_per_token: int = 3  # how many characters per token
 
     def __post_init__(self):
 
@@ -112,30 +114,26 @@ def main():
         save_total_limit=config.save_total_limit,
         push_to_hub=False,
     )
-    # TODO: Figure out why we are unable to load the tokenizer using json
+
+    # Build Tokenizer
     if os.path.isfile(config.tokenizer_path):
-        # tokenizer = PreTrainedTokenizerFast(
-        #     tokenizer_object=Tokenizer.from_file(config.tokenizer_path),
-        # )
-        tokenizer = PreTrainedTokenizerFast(tokenizer_file=config.tokenizer_path)
-        print('inside')
+        tokenizer = Tokenizer.from_file(config.tokenizer_path)
     else:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
-    print(tokenizer)
-
+    # Build model
     if is_json_file(args.model_path):
         model_config = PretrainedConfig.from_json_file(args.model_path)
         model_config.vocab_size = tokenizer.vocab_size
         model_config.pad_token_id = tokenizer.pad_token_id
         model = BertForMaskedLM(model_config)
-
     else:
         model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_path)
 
 
-    train_dataset = FastaDataset(config.train_path)
-    eval_dataset = FastaDataset(config.validation_path)
+    # get datasets
+    train_dataset = FastaDataset(config.train_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa)
+    eval_dataset = FastaDataset(config.validation_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa)
 
     # If the number of tokens in the tokenizer is different from the number of tokens
     # in the model resize the input embedding layer and the MLM prediction head
@@ -156,7 +154,7 @@ def main():
         eval_dataset=eval_dataset,
     )
 
-
+    # start from checkpoint
     checkpoint = get_last_checkpoint(config.output_dir)
     if checkpoint is not None:
         print("Training from checkpoint:", checkpoint)
