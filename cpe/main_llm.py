@@ -12,7 +12,8 @@ from transformers import (
     PreTrainedTokenizerFast,
     Trainer,
     TrainingArguments,
-    PretrainedConfig
+    PretrainedConfig,
+    AutoTokenizer
 )
 
 import wandb
@@ -116,17 +117,36 @@ def main():
     )
 
     # Build Tokenizer
-    if os.path.isfile(config.tokenizer_path):
-        tokenizer = Tokenizer.from_file(config.tokenizer_path)
+    if os.path.isfile(Path(config.tokenizer_path)):
+        print(config.tokenizer_path)
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
+        #tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_path, use_fast = False)
     else:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
     # Build model
-    if is_json_file(args.model_path):
+    if is_json_file(Path(args.model_path)):
         model_config = PretrainedConfig.from_json_file(args.model_path)
+        print(model_config)
         model_config.vocab_size = tokenizer.vocab_size
-        model_config.pad_token_id = tokenizer.pad_token_id
-        model = BertForMaskedLM(model_config)
+        print(tokenizer.vocab_size)
+        #print(tokenizer.get_vocab())
+        
+        # TODO: how to change the pad_token_id because:
+        # AttributeError: 'tokenizers.Tokenizer' object has no attribute 'pad_token_id'
+        model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
+        print(tokenizer.get_vocab())
+        special_tokens = {
+        "unk_token": "[UNK]",
+        "cls_token": "[CLS]",
+        "sep_token": "[SEP]",
+        "pad_token": "[PAD]",
+        "mask_token": "[MASK]",
+        "bos_token": "[BOS]",
+        "eos_token": "[EOS]",
+    }
+        tokenizer.add_special_tokens(special_tokens)
+        model = MODEL_DISPATCH[args.model_architecture](model_config)
     else:
         model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_path)
 
