@@ -171,7 +171,7 @@ tokenizer = get_tokenizer(
     sequences, tokenizer_checkpoint=tokenizer_checkpoint, vocab_size=50_257
 )
 
-# TODO: see how to get the seq_length from the args in main_llm:
+# TODO: see how to get the seq_seq_lengthlength from the args in main_llm:
 seq_length = 1024
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

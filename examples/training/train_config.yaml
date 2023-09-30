@@ -12,9 +12,11 @@ per_device_eval_batch_size: 64
 per_device_train_batch_size: 32
 save_steps: 500
 save_total_limit: 5
-tokenizer_path: /home/couchbucks/Documents/saketh/LLM_sequences/cpe/cpe/tokenizers/saved_tokenizers/cpe_tokenizer
+tokenizer_path: home/couchbucks/Documents/saketh/LLM_sequences/cpe/cpe/tokenizers/tokenizer_files/tokenizer_json_files/codon_wordlevel_71vocab.json
 train_path: /home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta
 validation_path: /home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta
 wandb_project: ''
 warmup_steps: 1000
 weight_decay: 0.01
+convert_to_aa: False
+num_char_per_token: 3
