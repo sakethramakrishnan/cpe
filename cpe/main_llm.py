@@ -12,8 +12,7 @@ from transformers import (
     PreTrainedTokenizerFast,
     Trainer,
     TrainingArguments,
-    PretrainedConfig,
-    AutoTokenizer
+    PretrainedConfig
 )
 
 import wandb
@@ -118,20 +117,16 @@ def main():
 
     # Build Tokenizer
     if os.path.isfile(Path(config.tokenizer_path)):
-        print(config.tokenizer_path)
         tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
-        #tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_path, use_fast = False)
+        
     else:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
     # Build model
     if is_json_file(Path(args.model_path)):
         model_config = PretrainedConfig.from_json_file(args.model_path)
-        print(model_config)
         model_config.vocab_size = tokenizer.vocab_size
-        print(tokenizer.vocab_size)
         model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
-        print(tokenizer.get_vocab())
         special_tokens = {
         "unk_token": "[UNK]",
         "cls_token": "[CLS]",

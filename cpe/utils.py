@@ -12,7 +12,7 @@ import random
 import re
 from collections import Counter, defaultdict
 
-from Bio.SeqUtils import GC
+from Bio.SeqUtils import gc_fraction
 from pydantic import BaseModel
 import os
 
@@ -119,7 +119,7 @@ def filter_sequences_by_gc_and_bases(dna_sequences: List[List[str]]) -> List[str
     """all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences"""
     refined_sequences = []
     for i, seq in enumerate(dna_sequences):
-        gc_content = GC(seq)
+        gc_content = gc_fraction(seq)
         if (
             gc_content > 0.0
             and gc_content < 100.0
@@ -143,7 +143,7 @@ def find_invalid_seqs(dna_sequences: List[List[str]]) -> List[str]:
     bad_sequences = []
     bad_indices = []
     for i, seq in enumerate(dna_sequences):
-        gc_content = GC(seq)
+        gc_content = gc_fraction(seq)
         if (
             gc_content == 0.0
             or gc_content == 100.0
@@ -209,7 +209,7 @@ def gc_content(seqs: List[str]) -> List[float]:
     List
         GC content of each DNA sequence.
     """
-    return [GC(seq) for seq in seqs]
+    return [gc_fraction(seq) for seq in seqs]
 
 
 def check_bases(seq):

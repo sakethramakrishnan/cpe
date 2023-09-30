@@ -146,6 +146,7 @@ def build_tokenizer(
         "bos_token": "[BOS]",
         "eos_token": "[EOS]",
     }
+    
     bos_index = 5
     eos_index = 6
 
