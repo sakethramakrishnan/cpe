@@ -130,10 +130,6 @@ def main():
         print(model_config)
         model_config.vocab_size = tokenizer.vocab_size
         print(tokenizer.vocab_size)
-        #print(tokenizer.get_vocab())
-        
-        # TODO: how to change the pad_token_id because:
-        # AttributeError: 'tokenizers.Tokenizer' object has no attribute 'pad_token_id'
         model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
         print(tokenizer.get_vocab())
         special_tokens = {
