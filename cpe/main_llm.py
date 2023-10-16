@@ -19,6 +19,7 @@ import wandb
 import yaml
 from dataclasses import asdict, dataclass
 import json
+# TODO: It's good to remove unused imports
 from tokenizers import Tokenizer
 from os.path import dirname
 os.environ["WANDB_DISABLED"] = "true"
@@ -30,6 +31,9 @@ MODEL_DISPATCH = {
     "bert": BertForMaskedLM,
 }
 
+# TODO: We can reaplce this logic by checking the file extension (see below)
+#       (that removes the need to read the file). File I/O is slow :)
+#       This function can be removed after the changes.
 def is_json_file(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -56,7 +60,7 @@ class GenSLMTrainingConfig:
     weight_decay: float = 0.01
     warmup_steps: int = 1000
     # NOTE: in the yaml file and the python file, DO NOT represent lr using scientific notation
-    learning_rate: float = .00005
+    learning_rate: float = 0.00005
     save_steps: int = 500
     load_best_model_at_end: bool = True
     save_total_limit: int = 5
@@ -87,7 +91,11 @@ class GenSLMTrainingConfig:
 def main():
     # Parse a yaml file to get the training config
     parser = ArgumentParser()
+    # TODO: Instead of a default config file, let's make it a required argument
+    #       Then add an example in the README for how to run the training script using this config file 
+    #       (we can use a relative path to the config file in the example)
     parser.add_argument("--config", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml')
+    # TODO: Let's add model architecture and model path as fields within the config file
     parser.add_argument("--model_architecture", type=str, required=False, default='bert')
     parser.add_argument("--model_path", type=str, required=False, default='bert/bert_3m.json')
 
@@ -116,6 +124,9 @@ def main():
     )
 
     # Build Tokenizer
+    # TODO: Path objects have an is_file() method, it's better to use that.
+    #       Although, I don't think we need an if-else check here.
+    #       The pretrained_model_name_or_path is the first argument anyways :)
     if os.path.isfile(Path(config.tokenizer_path)):
         tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
         
@@ -123,10 +134,13 @@ def main():
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
     # Build model
-    if is_json_file(Path(args.model_path)):
+    # TODO: Remove this code: if is_json_file(Path(args.model_path)):
+    if Path(args.model_path).suffix == '.json':
         model_config = PretrainedConfig.from_json_file(args.model_path)
         model_config.vocab_size = tokenizer.vocab_size
         model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
+        # TODO: It would be good if we can add these tokens to the tokenizer json file
+        #       (that way we don't have to add them here)
         special_tokens = {
         "unk_token": "[UNK]",
         "cls_token": "[CLS]",
@@ -139,6 +153,7 @@ def main():
         tokenizer.add_special_tokens(special_tokens)
         model = MODEL_DISPATCH[args.model_architecture](model_config)
     else:
+        # TODO: Why do we need different if-else cases here?
         model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_path)
 
 
