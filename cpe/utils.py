@@ -1,24 +1,21 @@
+import glob
+import queue
+import threading
 from operator import itemgetter
 from pathlib import Path
 from typing import List, Union
 
-import glob
-import queue
-
-import threading
 PathLike = Union[str, Path]
 
+import os
 import random
 import re
+import time
 from collections import Counter, defaultdict
 
+import tqdm
 from Bio.SeqUtils import gc_fraction
 from pydantic import BaseModel
-import os
-
-import tqdm
-
-import time
 
 
 class Sequence(BaseModel):
@@ -26,6 +23,8 @@ class Sequence(BaseModel):
     """Biological sequence (Nucleotide sequence)."""
     tag: str
     """Sequence description tag."""
+
+
 CODON_TO_CHAR = {
     "TCG": "A",
     "GCA": "B",
@@ -96,8 +95,10 @@ CODON_TO_CHAR = {
 
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
+
 def group_and_contextualize(seq: str, k: int = 3):
     return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+
 
 def read_fasta(fasta_file: PathLike) -> List[Sequence]:
     """Reads fasta file sequences and description tags into dataclass."""
@@ -287,6 +288,7 @@ def seq_to_codon_list(seq: str) -> List[str]:
     """split the sequence string into strings of len 3"""
     return [seq[i : i + 3] for i in range(0, len(seq), 3)]
 
+
 def fasta_corpus_iterator(fasta_folder: Union[Path, List[Path]]):
     """Iterates over a set of fasta files one sequence at a time.
 
@@ -305,7 +307,6 @@ def fasta_corpus_iterator(fasta_folder: Union[Path, List[Path]]):
 
 class SequenceReader:
     def __init__(self, fasta_file: Path) -> None:
-
         self.finished = False
         self.queue = queue.Queue()
         self.thread = threading.Thread(
@@ -362,6 +363,7 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
     return lines[1::2]
 
+
 def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     if os.path.isdir(fasta_file):
         sequences_raw = []
@@ -370,7 +372,9 @@ def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     elif os.path.isfile(fasta_file):
         sequences_raw = read_fasta_only_seq(fasta_file)
     else:
-        raise ValueError("Kindly enter a filepath to a directory containing many .fasta files "
-                         "or a filepath to a single .fasta file")
+        raise ValueError(
+            "Kindly enter a filepath to a directory containing many .fasta files "
+            "or a filepath to a single .fasta file"
+        )
 
     return sequences_raw

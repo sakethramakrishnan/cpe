@@ -119,7 +119,6 @@ class SequenceDataset(Dataset):  # type: ignore[type-arg]
         kmer_size: int = 3,
         verbose: bool = True,
     ) -> List[BatchEncoding]:
-
         tokenizer_fn = functools.partial(
             tokenizer,
             max_length=seq_length,

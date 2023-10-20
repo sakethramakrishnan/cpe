@@ -4,12 +4,15 @@ from typing import List, Union
 
 from tokenizers import Tokenizer, decoders, models, processors, trainers
 from tokenizers.processors import TemplateProcessing
+
 # TODO: How to import any_file_fasta_reader from utils
 # from cpe.utils import any_file_fasta_reader
 from transformers import BatchEncoding, PreTrainedTokenizerFast
+
 PathLike = Union[str, Path]
 import os
 import re
+
 
 def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
     """Reads fasta file sequences without description tag."""
@@ -22,6 +25,7 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
     return lines[1::2]
 
+
 def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     if os.path.isdir(fasta_file):
         sequences_raw = []
@@ -30,10 +34,13 @@ def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     elif os.path.isfile(fasta_file):
         sequences_raw = read_fasta_only_seq(fasta_file)
     else:
-        raise ValueError("Kindly enter a filepath to a directory containing many .fasta files "
-                         "or a filepath to a single .fasta file")
+        raise ValueError(
+            "Kindly enter a filepath to a directory containing many .fasta files "
+            "or a filepath to a single .fasta file"
+        )
 
     return sequences_raw
+
 
 def build_tokenizer(
     corpus_iterator,
@@ -41,7 +48,7 @@ def build_tokenizer(
     add_bos_eos: bool = True,
     max_length: int = 1024,
     save: bool = False,
-    tokenzier_save_name: str = 'npe_tokenizer'
+    tokenzier_save_name: str = "npe_tokenizer",
 ):
     special_tokens = {
         "unk_token": "[UNK]",
@@ -89,16 +96,14 @@ def build_tokenizer(
     return wrapped_tokenizer
 
 
-
-
 if __name__ == "__main__":
     sequence_file = Path()
     start = time.time()
-    sequence_file_training = '/home/couchbucks/Downloads/all_fasta_files/training'
-    sequence_file_testing = '/home/couchbucks/Downloads/all_fasta_files/testing'
+    sequence_file_training = "/home/couchbucks/Downloads/all_fasta_files/training"
+    sequence_file_testing = "/home/couchbucks/Downloads/all_fasta_files/testing"
     sequences_training = any_file_fasta_reader(sequence_file)
     sequences_testing = any_file_fasta_reader(sequence_file_testing)
     sequences = sequences_testing + sequences_testing
-    sequences = [seq for seq in sequences if len(seq)>=3]
+    sequences = [seq for seq in sequences if len(seq) >= 3]
     tokenizer = build_tokenizer(sequences, vocab_size=50_257, save=True)
     print("Tokenizer build time:", time.time() - start)

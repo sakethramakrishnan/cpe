@@ -1,16 +1,18 @@
+import os
+import re
 import time
 from pathlib import Path
 from typing import List, Union
 
 from tokenizers import Tokenizer, decoders, models, processors, trainers
 from tokenizers.processors import TemplateProcessing
+
 # TODO: How to import any_file_fasta_reader from utils
 # from utils import any_file_fasta_reader
 from transformers import BatchEncoding, PreTrainedTokenizerFast
-import os
-import re
 
 PathLike = Union[str, Path]
+
 
 def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
     """Reads fasta file sequences without description tag."""
@@ -23,6 +25,7 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
     return lines[1::2]
 
+
 def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     if os.path.isdir(fasta_file):
         sequences_raw = []
@@ -31,10 +34,13 @@ def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
     elif os.path.isfile(fasta_file):
         sequences_raw = read_fasta_only_seq(fasta_file)
     else:
-        raise ValueError("Kindly enter a filepath to a directory containing many .fasta files "
-                         "or a filepath to a single .fasta file")
+        raise ValueError(
+            "Kindly enter a filepath to a directory containing many .fasta files "
+            "or a filepath to a single .fasta file"
+        )
 
     return sequences_raw
+
 
 # Assign a unique character to each codon so that we can use it as an
 # input token to a BPE tokenizer. This implements a codon-pair encoding.
@@ -108,6 +114,7 @@ CODON_TO_CHAR = {
 
 CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
 
+
 def group_and_contextualize(seq: str, k: int = 3):
     return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
 
@@ -129,13 +136,14 @@ class CodonBPETokenizer:
         text = super().decode(*args, **kwargs)
         return "".join(CHAR_TO_CODON.get(c, "") for c in text)
 
+
 def build_tokenizer(
     corpus_iterator,
     vocab_size=50_257,
     add_bos_eos: bool = True,
     max_length: int = 1024,
     save: bool = False,
-    tokenzier_save_name: str = 'cpe_tokenizer'
+    tokenzier_save_name: str = "cpe_tokenizer",
 ):
     special_tokens = {
         "unk_token": "[UNK]",
@@ -146,7 +154,7 @@ def build_tokenizer(
         "bos_token": "[BOS]",
         "eos_token": "[EOS]",
     }
-    
+
     bos_index = 5
     eos_index = 6
 

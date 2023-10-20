@@ -130,8 +130,11 @@ def main():
     if os.path.isfile(Path(config.tokenizer_path)):
         tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
         
+    # TODO: try only line 135    
     else:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+
+    #Also, do not hardcode convert_to_aa and num_char_per_token, add them with tokenizer or have tokenizer type
 
     # Build model
     # TODO: Remove this code: if is_json_file(Path(args.model_path)):
@@ -150,7 +153,7 @@ def main():
         "bos_token": "[BOS]",
         "eos_token": "[EOS]",
     }
-        tokenizer.add_special_tokens(special_tokens)
+        #tokenizer.add_special_tokens(special_tokens)
         model = MODEL_DISPATCH[args.model_architecture](model_config)
     else:
         # TODO: Why do we need different if-else cases here?
