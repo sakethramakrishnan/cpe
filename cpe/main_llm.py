@@ -6,6 +6,8 @@ from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
 from transformers.trainer_utils import get_last_checkpoint
 
+from tokenizers import Tokenizer
+
 from transformers import (
     BertForMaskedLM,
     GPTNeoXForCausalLM,
@@ -18,10 +20,7 @@ from transformers import (
 import wandb
 import yaml
 from dataclasses import asdict, dataclass
-import json
-# TODO: It's good to remove unused imports
-from tokenizers import Tokenizer
-from os.path import dirname
+
 os.environ["WANDB_DISABLED"] = "true"
 
 MODEL_DISPATCH = {
@@ -31,17 +30,6 @@ MODEL_DISPATCH = {
     "bert": BertForMaskedLM,
 }
 
-# TODO: We can reaplce this logic by checking the file extension (see below)
-#       (that removes the need to read the file). File I/O is slow :)
-#       This function can be removed after the changes.
-def is_json_file(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            json.load(file)
-        return True
-    except (json.JSONDecodeError, FileNotFoundError):
-        return False
-
 
 @dataclass
 class GenSLMTrainingConfig:
@@ -49,6 +37,8 @@ class GenSLMTrainingConfig:
     per_device_train_batch_size: int = 64
     per_device_eval_batch_size: int = 128
     gradient_accumulation_steps: int = 2
+    model_architecture: str = ""
+    model_path: str = ""
     tokenizer_path: str = "/home/couchbucks/Documents/saketh/LLM_sequences/test_tokenizer"
     output_dir: str = "bpe_llm_out"
     train_path: str = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
@@ -64,10 +54,10 @@ class GenSLMTrainingConfig:
     save_steps: int = 500
     load_best_model_at_end: bool = True
     save_total_limit: int = 5
-    wandb_project: str = ""  # Set to empty string to turn off wandb
+    wandb_project: str = ''  # Set to empty string to turn off wandb
     fp16: bool = True
-    convert_to_aa: bool = False  # whether to translate the DNA sequence into protein alphabets
-    num_char_per_token: int = 3  # how many characters per token
+    convert_to_aa: bool = ''  # whether to translate the DNA sequence into protein alphabets
+    num_char_per_token: int = ''  # how many characters per token
 
     def __post_init__(self):
 
@@ -94,15 +84,45 @@ def main():
     # TODO: Instead of a default config file, let's make it a required argument
     #       Then add an example in the README for how to run the training script using this config file 
     #       (we can use a relative path to the config file in the example)
-    parser.add_argument("--config", type=str, required=False, default='/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml')
-    # TODO: Let's add model architecture and model path as fields within the config file
-    parser.add_argument("--model_architecture", type=str, required=False, default='bert')
-    parser.add_argument("--model_path", type=str, required=False, default='bert/bert_3m.json')
+    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--tokenizer_type", type=str, required=True, choices=['ape_tokenizer', 'npe_tokenizer', 'cpe_tokenizer', 'codon_wordlevel', 'dna_wordlevel', 'protein_alphabet_wordlevel'])
+    
+    '''
+    python3 main_llm.py --config=/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml --tokenizer_type=ape_tokenizer
+    '''
+
 
     args = parser.parse_args()
     with open(args.config) as fp:
         config = GenSLMTrainingConfig(**yaml.safe_load(fp))
 
+
+    # adjust these settings in the yaml file
+    if args.tokenizer_type == "ape_tokenizer":
+        if config.convert_to_aa != True or config.num_char_per_token != 1:
+            raise ValueError("tokenizer type ape_tokenizer must have convert_to_aa=True and num_char_per_token=1. Check the config file or the tokenizer_type argument")
+    
+    elif args.tokenizer_type == "npe_tokenizer":
+        if config.convert_to_aa != False or config.num_char_per != 1:
+            raise ValueError("tokenizer type npe_tokenizer must have convert_to_aa=False and num_char_per_token=1. Check the config file or the token or the tokenizer_type argument")
+    
+    elif args.tokenizer_type == "cpe_tokenizer":
+        if config.convert_to_aa != False or config.num_char_per_token != 3:
+            raise ValueError("tokenizer type cpe_tokenizer must have convert_to_aa=False and num_char_per_token=3. Check the config file or the token or the tokenizer_type argument")
+    
+    elif args.tokenizer_type == "codon_wordlevel":
+        if config.convert_to_aa != False or config.num_char_per_token != 3:
+            raise ValueError("tokenizer type codon_wordlevel must have convert_to_aa=False and num_char_per_token=3. Check the config file or the token or the tokenizer_type argument")
+        
+    elif args.tokenizer_type == "dna_wordlevel":
+        if config.convert_to_aa != False or config.num_char_per_token != 1:
+            raise ValueError("tokenizer type dna_wordlevel must have convert_to_aa=False and num_char_per_token=1. Check the config file or the token or the tokenizer_type argument")
+    
+    elif args.tokenizer_type == "protein_alphabet_wordlevel":
+        if config.convert_to_aa!= True or config.num_char_per_token!= 1:
+            raise ValueError("tokenizer type protein_alphabet_wordlevel must have convert_to_aa=True and num_char_per_token=1. Check the config file or the token or the tokenizer_type argument")
+     
+    
     training_args = TrainingArguments(
         output_dir=config.output_dir,
         per_device_train_batch_size=config.per_device_train_batch_size,
@@ -124,24 +144,19 @@ def main():
     )
 
     # Build Tokenizer
-    # TODO: Path objects have an is_file() method, it's better to use that.
-    #       Although, I don't think we need an if-else check here.
-    #       The pretrained_model_name_or_path is the first argument anyways :)
-    if os.path.isfile(Path(config.tokenizer_path)):
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
-        
-    # TODO: try only line 135    
-    else:
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+    tokenizer = Tokenizer.from_file(config.tokenizer_path)
 
     #Also, do not hardcode convert_to_aa and num_char_per_token, add them with tokenizer or have tokenizer type
 
     # Build model
-    # TODO: Remove this code: if is_json_file(Path(args.model_path)):
-    if Path(args.model_path).suffix == '.json':
-        model_config = PretrainedConfig.from_json_file(args.model_path)
-        model_config.vocab_size = tokenizer.vocab_size
+    
+    # if we are instantiating a new model, we need to instantiate a new model from a json file (if statement)
+    if Path(config.model_path).suffix == '.json':
+        model_config = PretrainedConfig.from_json_file(config.model_path)
+        model_config.vocab_size = tokenizer.get_vocab_size
+        print(tokenizer.get_vocab()['[PAD]'])
         model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
+        
         # TODO: It would be good if we can add these tokens to the tokenizer json file
         #       (that way we don't have to add them here)
         special_tokens = {
@@ -154,10 +169,13 @@ def main():
         "eos_token": "[EOS]",
     }
         #tokenizer.add_special_tokens(special_tokens)
-        model = MODEL_DISPATCH[args.model_architecture](model_config)
+        model = MODEL_DISPATCH[config.model_architecture](model_config)
     else:
         # TODO: Why do we need different if-else cases here?
-        model = MODEL_DISPATCH[args.model_architecture].from_pretrained(args.model_path)
+        # There are different if-else cases because:
+        # a) if we have an untrained model, we need to instantiate a new model from a json file (if statement)
+# b) if we have a trained model, we need to load it from a checkpoint (else statement)
+        model = MODEL_DISPATCH[config.model_architecture].from_pretrained(config.model_path)
 
 
     # get datasets
@@ -193,4 +211,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
