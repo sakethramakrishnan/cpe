@@ -144,7 +144,11 @@ def main():
     )
 
     # Build Tokenizer
-    tokenizer = Tokenizer.from_file(config.tokenizer_path)
+    if os.path.isfile(Path(config.tokenizer_path)):
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
+        
+    else:
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
 
     #Also, do not hardcode convert_to_aa and num_char_per_token, add them with tokenizer or have tokenizer type
 
@@ -153,9 +157,9 @@ def main():
     # if we are instantiating a new model, we need to instantiate a new model from a json file (if statement)
     if Path(config.model_path).suffix == '.json':
         model_config = PretrainedConfig.from_json_file(config.model_path)
-        model_config.vocab_size = tokenizer.get_vocab_size
-        print(tokenizer.get_vocab()['[PAD]'])
-        model_config.pad_token_id = int(tokenizer.get_vocab()['[PAD]'])
+        model_config.vocab_size = tokenizer.vocab_size
+        print(tokenizer.vocab)
+        model_config.pad_token_id = int(tokenizer.vocab['[PAD]'])
         
         # TODO: It would be good if we can add these tokens to the tokenizer json file
         #       (that way we don't have to add them here)
@@ -168,7 +172,10 @@ def main():
         "bos_token": "[BOS]",
         "eos_token": "[EOS]",
     }
-        #tokenizer.add_special_tokens(special_tokens)
+
+        print(tokenizer)
+        #special_token_list = [special_tokens.get(key) for key in special_tokens.keys()]
+        tokenizer.add_special_tokens(special_tokens)
         model = MODEL_DISPATCH[config.model_architecture](model_config)
     else:
         # TODO: Why do we need different if-else cases here?
