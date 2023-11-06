@@ -6,7 +6,7 @@ from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
 from transformers.trainer_utils import get_last_checkpoint
 
-from tokenizers import Tokenizer
+for 
 
 from transformers import (
     BertForMaskedLM,
@@ -31,8 +31,10 @@ MODEL_DISPATCH = {
 }
 
 
+# this dataclass consolidates the training configuration
 @dataclass
 class GenSLMTrainingConfig:
+    
     num_train_epochs: int = 20
     per_device_train_batch_size: int = 64
     per_device_eval_batch_size: int = 128
@@ -64,7 +66,7 @@ class GenSLMTrainingConfig:
         # Setting this environment variable enables wandb logging
         if self.wandb_project:
             os.environ["WANDB_PROJECT"] = self.wandb_project
-            # Only resume a run if the output path already exists
+            # Only resume a run if the output path alrimport eady exists
             resume = os.path.exists(self.output_dir)
             Path(self.output_dir).mkdir(exist_ok=True, parents=True)
             wandb.init(dir=self.output_dir, resume=resume)
@@ -81,13 +83,12 @@ class GenSLMTrainingConfig:
 def main():
     # Parse a yaml file to get the training config
     parser = ArgumentParser()
-    # TODO: Instead of a default config file, let's make it a required argument
-    #       Then add an example in the README for how to run the training script using this config file 
-    #       (we can use a relative path to the config file in the example)
+
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--tokenizer_type", type=str, required=True, choices=['ape_tokenizer', 'npe_tokenizer', 'cpe_tokenizer', 'codon_wordlevel', 'dna_wordlevel', 'protein_alphabet_wordlevel'])
     
     '''
+    example usage in terminal format
     python3 main_llm.py --config=/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml --tokenizer_type=ape_tokenizer
     '''
 
@@ -97,6 +98,7 @@ def main():
         config = GenSLMTrainingConfig(**yaml.safe_load(fp))
 
 
+    # The following checks if our input is congruent with the .yaml configuration
     # adjust these settings in the yaml file
     if args.tokenizer_type == "ape_tokenizer":
         if config.convert_to_aa != True or config.num_char_per_token != 1:
@@ -123,6 +125,7 @@ def main():
             raise ValueError("tokenizer type protein_alphabet_wordlevel must have convert_to_aa=True and num_char_per_token=1. Check the config file or the token or the tokenizer_type argument")
      
     
+    # HuggingFace API training parameters
     training_args = TrainingArguments(
         output_dir=config.output_dir,
         per_device_train_batch_size=config.per_device_train_batch_size,
@@ -145,12 +148,12 @@ def main():
 
     # Build Tokenizer
     if os.path.isfile(Path(config.tokenizer_path)):
+        # These are for the .json files
         tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path=config.tokenizer_path)
         
     else:
+        # These are for the bpe tokenizers
         tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
-
-    #Also, do not hardcode convert_to_aa and num_char_per_token, add them with tokenizer or have tokenizer type
 
     # Build model
     
@@ -161,8 +164,6 @@ def main():
         print(tokenizer.vocab)
         model_config.pad_token_id = int(tokenizer.vocab['[PAD]'])
         
-        # TODO: It would be good if we can add these tokens to the tokenizer json file
-        #       (that way we don't have to add them here)
         special_tokens = {
         "unk_token": "[UNK]",
         "cls_token": "[CLS]",
@@ -173,15 +174,14 @@ def main():
         "eos_token": "[EOS]",
     }
 
-        print(tokenizer)
-        #special_token_list = [special_tokens.get(key) for key in special_tokens.keys()]
+        # for some reason, we need to add the special tokens even though they are in the json file
         tokenizer.add_special_tokens(special_tokens)
         model = MODEL_DISPATCH[config.model_architecture](model_config)
     else:
-        # TODO: Why do we need different if-else cases here?
+
         # There are different if-else cases because:
         # a) if we have an untrained model, we need to instantiate a new model from a json file (if statement)
-# b) if we have a trained model, we need to load it from a checkpoint (else statement)
+        # b) if we have a trained model, we need to load it from a checkpoint (else statement)
         model = MODEL_DISPATCH[config.model_architecture].from_pretrained(config.model_path)
 
 
@@ -192,6 +192,7 @@ def main():
     # If the number of tokens in the tokenizer is different from the number of tokens
     # in the model resize the input embedding layer and the MLM prediction head
 
+    # custom DataCollator
     data_collator = GenSLMCollatorForLanguageModeling(
         train_mode=True,
         tokenizer=tokenizer,
@@ -218,5 +219,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
