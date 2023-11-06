@@ -1,3 +1,6 @@
+# TODO: scale the vocab size with bpe and tune it
+# 
+
 from argparse import ArgumentParser
 import os
 from pathlib import Path
@@ -5,8 +8,6 @@ from pathlib import Path
 from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
 
 from transformers.trainer_utils import get_last_checkpoint
-
-for 
 
 from transformers import (
     BertForMaskedLM,
@@ -186,8 +187,8 @@ def main():
 
 
     # get datasets
-    train_dataset = FastaDataset(config.train_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa)
-    eval_dataset = FastaDataset(config.validation_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa)
+    train_dataset = FastaDataset(config.train_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa, tokenizer_type=args.tokenizer_type)
+    eval_dataset = FastaDataset(config.validation_path, num_char_per_token=config.num_char_per_token, convert_to_aa=config.convert_to_aa, tokenizer_type=args.tokenizer_type)
 
     # If the number of tokens in the tokenizer is different from the number of tokens
     # in the model resize the input embedding layer and the MLM prediction head

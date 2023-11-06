@@ -15,6 +15,7 @@ from collections import Counter, defaultdict
 
 import tqdm
 from Bio.SeqUtils import gc_fraction
+from Bio.Seq import translate
 from pydantic import BaseModel
 
 
@@ -96,7 +97,7 @@ CODON_TO_CHAR = {
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
 
-def group_and_contextualize(seq: str, num_char_per_token: int, convert_to_aa: bool tokenizer_type: str) -> str:
+def group_and_contextualize(seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str) -> str:
     """ 
     Prepares a sequence to be tokenized by the given tokenizer
     Note: all tokenizers require spaces between each character
@@ -114,9 +115,12 @@ def group_and_contextualize(seq: str, num_char_per_token: int, convert_to_aa: bo
     """
     seq.replace(" ", "")
     if tokenizer_type == 'cpe_tokenizer':
-        return " ".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+        return " ".join(CODON_TO_CHAR.get(seq[i : i + num_char_per_token], "") for i in range(0, len(seq), num_char_per_token))
     
-    substrings = [seq[i:i + k] for i in range(0, len(seq), k)]
+    if convert_to_aa:
+        substrings = [translate(seq)[i:i + num_char_per_token] for i in range(0, len(seq), num_char_per_token)]
+    else:
+        substrings = [seq[i:i + num_char_per_token] for i in range(0, len(seq), num_char_per_token)]
     return ' '.join(substrings)
 
 
@@ -136,7 +140,7 @@ def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
 
-def filter_sequences_by_gc_and_bases(dna_sequences: List[List[str]]) -> List[str]:
+def filter_sequences_by_gc(dna_sequences: List[List[str]]) -> List[str]:
     """all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences"""
     refined_sequences = []
     for i, seq in enumerate(dna_sequences):
@@ -145,7 +149,6 @@ def filter_sequences_by_gc_and_bases(dna_sequences: List[List[str]]) -> List[str
             gc_content > 0.0
             and gc_content < 100.0
             and len(seq) >= 3
-            and check_bases(seq)
         ):
             refined_sequences.append(dna_sequences[i])
 
