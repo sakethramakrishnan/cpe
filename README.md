@@ -21,3 +21,5 @@ git commit -m 'message'
 git push
 ```
 # Embedding Visualization: 
+
+Testing git - 11/6/23

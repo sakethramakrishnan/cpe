@@ -1,19 +1,20 @@
-import os  # TODO: Unused import
 from typing import Any, Dict, List
 
-from Bio.Seq import translate
 from torch.utils.data import Dataset
+
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
+
 from utils import (
     any_file_fasta_reader,
-    filter_sequences_by_gc_and_bases,
-    group_and_contextualize,
+    filter_sequences_by_gc,
+    group_and_contextualize
 )
 
+print('testing git 11/6/23')
 
 class FastaDataset(Dataset):
     def __init__(
-        self, file_path: str, num_char_per_token: int, convert_to_aa: bool = False
+        self, file_path: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
     ) -> None:
         # num_char_per_token is how many characters we tokenize
         # e.g. if our input_seq = 'AATTTGGGAATG' and convert_to_aa == False
@@ -24,17 +25,10 @@ class FastaDataset(Dataset):
         dna_sequences = any_file_fasta_reader(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
-        dna_sequences = filter_sequences_by_gc_and_bases(dna_sequences)
-
-        # TODO: Does it make sense to translate here? The variable name still indicates
-        #       that we are dealing with DNA sequences. Also group_and_contextualize calls
-        #       CODON_TO_CHAR which assumes that the input is a DNA sequence.
-        if convert_to_aa:
-            # translate from Bio.Seq automatically translates and truncates the DNA sequence
-            dna_sequences = [translate(seq) for seq in dna_sequences]
+        dna_sequences = filter_sequences_by_gc(dna_sequences)
 
         self.sequences = [
-            group_and_contextualize(seq, num_char_per_token) for seq in dna_sequences
+            group_and_contextualize(seq, num_char_per_token, convert_to_aa, tokenizer_type) for seq in dna_sequences
         ]
 
     def __len__(self) -> int:
