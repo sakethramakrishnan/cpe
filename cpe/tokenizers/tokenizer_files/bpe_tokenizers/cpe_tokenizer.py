@@ -8,7 +8,7 @@ from tokenizers import Tokenizer, decoders, models, processors, trainers
 from tokenizers.processors import TemplateProcessing
 
 # TODO: How to import any_file_fasta_reader from utils
-# from utils import any_file_fasta_reader
+#from utils import any_file_fasta_reader
 from transformers import BatchEncoding, PreTrainedTokenizerFast
 
 PathLike = Union[str, Path]
@@ -116,7 +116,7 @@ CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
 
 
 def group_and_contextualize(seq: str, k: int = 3):
-    return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+    return " ".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
 
 
 # TODO:"TypeError: type 'tokenizers.Tokenizer' is not an acceptable base type"
@@ -197,6 +197,8 @@ if __name__ == "__main__":
     start = time.time()
     sequence_file = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
     sequences = any_file_fasta_reader(sequence_file)
-    sequences = [group_and_contextualize(seq) for seq in sequences]
-    tokenizer = build_tokenizer(sequences, vocab_size=50_257)
+    sequences = [group_and_contextualize(seq.upper()) for seq in sequences]
+    print(sequences[0])
+    tokenizer = build_tokenizer(sequences, vocab_size=100)
     print("Tokenizer build time:", time.time() - start)
+    print(tokenizer.vocab)
