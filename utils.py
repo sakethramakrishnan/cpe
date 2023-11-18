@@ -97,31 +97,42 @@ CODON_TO_CHAR = {
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
 
-def group_and_contextualize(seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str) -> str:
-    """ 
+def group_and_contextualize(
+    seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
+) -> str:
+    """
     Prepares a sequence to be tokenized by the given tokenizer
     Note: all tokenizers require spaces between each character
-    
+
     ape, npe, protein_alphabet, and dna_wordlevel should be k = 1
     cpe and codon_wordlevel should be k = 3
 
     Args:
         seq (str): one sequence of DNA nucleotides or amino acids
-        k (int): the 
+        k (int): the
         tokenizer_type (str): choices=['ape_tokenizer', 'npe_tokenizer', 'cpe_tokenizer', 'codon_wordlevel', 'dna_wordlevel', 'protein_alphabet_wordlevel']
 
     Returns:
         str: a string of the grouped, separated, and/or contextualized sequences
     """
     seq.replace(" ", "")
-    if tokenizer_type == 'cpe_tokenizer':
-        return " ".join(CODON_TO_CHAR.get(seq[i : i + num_char_per_token], "") for i in range(0, len(seq), num_char_per_token))
-    
+    if tokenizer_type == "cpe_tokenizer":
+        return " ".join(
+            CODON_TO_CHAR.get(seq[i : i + num_char_per_token], "")
+            for i in range(0, len(seq), num_char_per_token)
+        )
+
     if convert_to_aa:
-        substrings = [translate(seq)[i:i + num_char_per_token] for i in range(0, len(seq), num_char_per_token)]
+        substrings = [
+            translate(seq)[i : i + num_char_per_token]
+            for i in range(0, len(seq), num_char_per_token)
+        ]
     else:
-        substrings = [seq[i:i + num_char_per_token] for i in range(0, len(seq), num_char_per_token)]
-    return ' '.join(substrings)
+        substrings = [
+            seq[i : i + num_char_per_token]
+            for i in range(0, len(seq), num_char_per_token)
+        ]
+    return " ".join(substrings)
 
 
 def read_fasta(fasta_file: PathLike) -> List[Sequence]:
@@ -145,11 +156,7 @@ def filter_sequences_by_gc(dna_sequences: List[List[str]]) -> List[str]:
     refined_sequences = []
     for i, seq in enumerate(dna_sequences):
         gc_content = gc_fraction(seq)
-        if (
-            gc_content > 0.0
-            and gc_content < 100.0
-            and len(seq) >= 3
-        ):
+        if gc_content > 0.0 and gc_content < 100.0 and len(seq) >= 3:
             refined_sequences.append(dna_sequences[i])
 
     return refined_sequences
@@ -383,16 +390,13 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
 
 def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
-    if os.path.isdir(fasta_file):
-        sequences_raw = []
-        for p in Path(fasta_file).glob("*.fasta"):
-            sequences_raw.extend(read_fasta_only_seq(p))
-    elif os.path.isfile(fasta_file):
-        sequences_raw = read_fasta_only_seq(fasta_file)
+    if Path(fasta_file).is_file():
+        fasta_files = [fasta_file]
     else:
-        raise ValueError(
-            "Kindly enter a filepath to a directory containing many .fasta files "
-            "or a filepath to a single .fasta file"
-        )
+        fasta_files = Path(fasta_file).glob("*.fasta")
 
-    return sequences_raw
+    sequences = []
+    for p in fasta_files:
+        sequences.extend(read_fasta_only_seq(p))
+
+    return sequences
