@@ -1,20 +1,20 @@
 from typing import Any, Dict, List
 
 from torch.utils.data import Dataset
-
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
 
-from utils import (
-    any_file_fasta_reader,
-    filter_sequences_by_gc,
-    group_and_contextualize
-)
+from utils import any_file_fasta_reader, filter_sequences_by_gc, group_and_contextualize
 
-print('testing git 11/6/23')
+print("testing git 11/6/23")
+
 
 class FastaDataset(Dataset):
     def __init__(
-        self, file_path: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
+        self,
+        file_path: str,
+        num_char_per_token: int,
+        convert_to_aa: bool,
+        tokenizer_type: str,
     ) -> None:
         # num_char_per_token is how many characters we tokenize
         # e.g. if our input_seq = 'AATTTGGGAATG' and convert_to_aa == False
@@ -28,7 +28,10 @@ class FastaDataset(Dataset):
         dna_sequences = filter_sequences_by_gc(dna_sequences)
 
         self.sequences = [
-            group_and_contextualize(seq, num_char_per_token, convert_to_aa, tokenizer_type) for seq in dna_sequences
+            group_and_contextualize(
+                seq, num_char_per_token, convert_to_aa, tokenizer_type
+            )
+            for seq in dna_sequences
         ]
 
     def __len__(self) -> int:

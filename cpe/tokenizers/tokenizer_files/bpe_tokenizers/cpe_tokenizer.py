@@ -8,7 +8,7 @@ from tokenizers import Tokenizer, decoders, models, processors, trainers
 from tokenizers.processors import TemplateProcessing
 
 # TODO: How to import any_file_fasta_reader from utils
-#from utils import any_file_fasta_reader
+# from utils import any_file_fasta_reader
 from transformers import BatchEncoding, PreTrainedTokenizerFast
 
 PathLike = Union[str, Path]
@@ -116,7 +116,9 @@ CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
 
 
 def group_and_contextualize(seq: str, k: int = 3):
-    return " ".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+    return " ".join(
+        CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k)
+    )
 
 
 # TODO:"TypeError: type 'tokenizers.Tokenizer' is not an acceptable base type"
