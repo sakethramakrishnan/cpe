@@ -16,7 +16,6 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-os.environ["WANDB_DISABLED"] = "true"
 
 MODEL_DISPATCH = {
     "GPTNeoXForCausalLM": GPTNeoXForCausalLM,
@@ -47,7 +46,6 @@ class GenSLMTrainingConfig:
     logging_steps: int = 500
     weight_decay: float = 0.01
     warmup_steps: int = 1000
-    # NOTE: in the yaml file and the python file, DO NOT represent lr using scientific notation
     learning_rate: float = 0.00005
     save_steps: int = 500
     load_best_model_at_end: bool = True
@@ -62,6 +60,7 @@ class GenSLMTrainingConfig:
     def __post_init__(self):
         # Setting this environment variable enables wandb logging
         if self.wandb_project:
+            os.environ["WANDB_DISABLED"] = "true"
             os.environ["WANDB_PROJECT"] = self.wandb_project
             # Only resume a run if the output path alrimport eady exists
             resume = os.path.exists(self.output_dir)
