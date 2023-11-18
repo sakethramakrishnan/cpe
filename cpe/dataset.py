@@ -5,7 +5,8 @@ from transformers import BatchEncoding, DataCollatorForLanguageModeling
 
 from utils import any_file_fasta_reader, filter_sequences_by_gc, group_and_contextualize
 
-print("testing git 11/6/23")
+
+# from typing import Callable, Optional
 
 
 class FastaDataset(Dataset):
@@ -15,6 +16,8 @@ class FastaDataset(Dataset):
         num_char_per_token: int,
         convert_to_aa: bool,
         tokenizer_type: str,
+        # TODO: Play with filter function abstraction
+        # filter_fnxs: Optional[List[Callable[[str], str]]] = None,
     ) -> None:
         # num_char_per_token is how many characters we tokenize
         # e.g. if our input_seq = 'AATTTGGGAATG' and convert_to_aa == False
@@ -25,6 +28,10 @@ class FastaDataset(Dataset):
         dna_sequences = any_file_fasta_reader(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
+        # if filter_fnxs:
+        #     for filter_fnx in filter_fnxs:
+        #         dna_sequences = [filter_fnx(seq) for seq in dna_sequences]
+
         dna_sequences = filter_sequences_by_gc(dna_sequences)
 
         self.sequences = [
