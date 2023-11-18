@@ -88,6 +88,7 @@ CODON_CHAR = {
     "TTG": "9",
     "TCC": "!",
     "TGA": "@",
+    "XXX": "*"
 }
 
 

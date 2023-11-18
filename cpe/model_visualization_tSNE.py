@@ -29,7 +29,7 @@ from utils import (
     read_fasta,
 )
 
-CODON_TO_CHAR = {
+CODON_CHAR = {
     "TCG": "A",
     "GCA": "B",
     "CTT": "C",
@@ -94,6 +94,7 @@ CODON_TO_CHAR = {
     "TTG": "9",
     "TCC": "!",
     "TGA": "@",
+    "XXX": "*"
 }
 
 
@@ -137,7 +138,7 @@ class SequenceDataset(Dataset):  # type: ignore[type-arg]
     @staticmethod
     def group_and_contextualize(seq: str, k: int = 3):
         return "".join(
-            CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k)
+            CODON_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k)
         )
 
     def __len__(self) -> int:

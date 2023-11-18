@@ -96,6 +96,8 @@ CODON_TO_CHAR = {
 
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
+def group_and_contextualize_cpe_training(seq: str, k: int = 3):
+    return "".join(CODON_TO_CHAR.get(seq[i : i + k]) for i in range(0, len(seq), k))
 
 def group_and_contextualize(
     seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
@@ -460,21 +462,22 @@ def make_perfect_fasta(current_fasta_files: PathLike, write_fasta_file: str, mod
     sequences = [make_str_div(seq.sequence.upper(), 3) for seq in seqs_and_tags]
     tags = [seq.tag for seq in seqs_and_tags]
 
-    valid_inds = [
-        i
-        for i, sequence in enumerate(sequences)
-        
-        if gc_fraction(sequence) > 0.0
-        and gc_fraction(sequence) < 100.0
-        and len(sequence) >= 3
-    ]
-    refined_seqs = [sequences[i] for i in valid_inds]
+    valid_inds = []
+    
+    refined_seqs = []
+    
+    for i, sequence in enumerate(sequences):
+        if gc_fraction(sequence) > 0.0 and gc_fraction(sequence) < 100.0 and len(sequence) >= 3:
+            codon_list = seq_to_codon_list(sequence)
+            replaced_codon_list = replace_invalid_codons(codon_list)
+            refined_seqs.append("".join(replaced_codon_list))
+            valid_inds.append(i)
+            
+    
     refined_tags = [tags[i] for i in valid_inds]
     
     with open(write_fasta_file, mode) as f:
         for seq, tag in zip(refined_seqs, refined_tags):
-            f.write(f">{seq}\n{tag}\n")
-            
-    
+            f.write(f">{tag}\n{seq}\n")
 
-make_perfect_fasta(current_fasta_files='/home/couchbucks/Downloads/all_fasta_files/mdh_natural_sequences.ffn', write_fasta_file='mdh_dataset.fasta')
+make_perfect_fasta("/home/couchbucks/Downloads/all_fasta_files/mdh_natural_sequences.ffn", "mdh_natural_dataset.fasta")
