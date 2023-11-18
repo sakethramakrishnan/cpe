@@ -115,19 +115,21 @@ def group_and_contextualize(
     Returns:
         str: a string of the grouped, separated, and/or contextualized sequences
     """
-    seq.replace(" ", "")
     if tokenizer_type == "cpe_tokenizer":
-        return " ".join(
-            CODON_TO_CHAR.get(seq[i : i + num_char_per_token], "")
-            for i in range(0, len(seq), num_char_per_token)
-        )
+        try:
+            return " ".join(
+                CODON_TO_CHAR[seq[i : i + num_char_per_token]]
+                for i in range(0, len(seq), num_char_per_token)
+            )
+        except KeyError:
+            raise ValueError(f"Invalid sequence during codon to char:\n{seq}")
 
     if convert_to_aa:
         substrings = [
             translate(seq)[i : i + num_char_per_token]
             for i in range(0, len(seq), num_char_per_token)
         ]
-    else:
+    else:  # Nucleotide case
         substrings = [
             seq[i : i + num_char_per_token]
             for i in range(0, len(seq), num_char_per_token)
@@ -154,10 +156,10 @@ def intersection(lst1, lst2):
 def filter_sequences_by_gc(dna_sequences: List[List[str]]) -> List[str]:
     """all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences"""
     refined_sequences = []
-    for i, seq in enumerate(dna_sequences):
+    for seq in dna_sequences:
         gc_content = gc_fraction(seq)
         if gc_content > 0.0 and gc_content < 100.0 and len(seq) >= 3:
-            refined_sequences.append(dna_sequences[i])
+            refined_sequences.append(seq)
 
     return refined_sequences
 
