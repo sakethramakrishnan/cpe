@@ -15,6 +15,7 @@ from collections import Counter, defaultdict
 
 import tqdm
 from Bio.SeqUtils import gc_fraction
+from Bio.Seq import translate
 from pydantic import BaseModel
 
 
@@ -96,8 +97,44 @@ CODON_TO_CHAR = {
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
 
-def group_and_contextualize(seq: str, k: int = 3):
-    return "".join(CODON_TO_CHAR.get(seq[i : i + k], "") for i in range(0, len(seq), k))
+def group_and_contextualize(
+    seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
+) -> str:
+    """
+    Prepares a sequence to be tokenized by the given tokenizer
+    Note: all tokenizers require spaces between each character
+
+    ape, npe, protein_alphabet, and dna_wordlevel should be k = 1
+    cpe and codon_wordlevel should be k = 3
+
+    Args:
+        seq (str): one sequence of DNA nucleotides or amino acids
+        k (int): the
+        tokenizer_type (str): choices=['ape_tokenizer', 'npe_tokenizer', 'cpe_tokenizer', 'codon_wordlevel', 'dna_wordlevel', 'protein_alphabet_wordlevel']
+
+    Returns:
+        str: a string of the grouped, separated, and/or contextualized sequences
+    """
+    if tokenizer_type == "cpe_tokenizer":
+        try:
+            return " ".join(
+                CODON_TO_CHAR[seq[i : i + num_char_per_token]]
+                for i in range(0, len(seq), num_char_per_token)
+            )
+        except KeyError:
+            raise ValueError(f"Invalid sequence during codon to char:\n{seq}")
+
+    if convert_to_aa:
+        substrings = [
+            translate(seq)[i : i + num_char_per_token]
+            for i in range(0, len(seq), num_char_per_token)
+        ]
+    else:  # Nucleotide case
+        substrings = [
+            seq[i : i + num_char_per_token]
+            for i in range(0, len(seq), num_char_per_token)
+        ]
+    return " ".join(substrings)
 
 
 def read_fasta(fasta_file: PathLike) -> List[Sequence]:
@@ -116,18 +153,13 @@ def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
 
-def filter_sequences_by_gc_and_bases(dna_sequences: List[List[str]]) -> List[str]:
+def filter_sequences_by_gc(dna_sequences: List[List[str]]) -> List[str]:
     """all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences"""
     refined_sequences = []
-    for i, seq in enumerate(dna_sequences):
+    for seq in dna_sequences:
         gc_content = gc_fraction(seq)
-        if (
-            gc_content > 0.0
-            and gc_content < 100.0
-            and len(seq) >= 3
-            and check_bases(seq)
-        ):
-            refined_sequences.append(dna_sequences[i])
+        if gc_content > 0.0 and gc_content < 100.0 and len(seq) >= 3:
+            refined_sequences.append(seq)
 
     return refined_sequences
 
@@ -258,11 +290,6 @@ def get_label_dict(labels: List[str]):
 
     return label_dict
 
-    return model
-
-
-BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
-
 
 def check_bases(seq):
     """Check that each of the letters in each sequence is of the set{'A', 'T', 'C', 'G'}"""
@@ -365,16 +392,89 @@ def read_fasta_only_seq(fasta_file: PathLike) -> List[str]:
 
 
 def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
-    if os.path.isdir(fasta_file):
-        sequences_raw = []
-        for p in Path(fasta_file).glob("*.fasta"):
-            sequences_raw.extend(read_fasta_only_seq(p))
-    elif os.path.isfile(fasta_file):
-        sequences_raw = read_fasta_only_seq(fasta_file)
+    if Path(fasta_file).is_file():
+        fasta_files = [fasta_file]
     else:
-        raise ValueError(
-            "Kindly enter a filepath to a directory containing many .fasta files "
-            "or a filepath to a single .fasta file"
-        )
+        fasta_files = Path(fasta_file).glob("*.fasta")
 
-    return sequences_raw
+    sequences = []
+    for p in fasta_files:
+        sequences.extend(read_fasta_only_seq(p))
+
+    return sequences
+
+class Sequence(BaseModel):
+    sequence: str
+    """Biological sequence (Nucleotide sequence)."""
+    tag: str
+    """Sequence description tag."""
+
+
+def read_fasta(fasta_file: PathLike) -> List[Sequence]:
+    """Reads fasta file sequences and description tags into dataclass."""
+    text = Path(fasta_file).read_text()
+    pattern = re.compile("^>", re.MULTILINE)
+    non_parsed_seqs = re.split(pattern, text)[1:]
+    lines = [
+        line.replace("\n", "") for seq in non_parsed_seqs for line in seq.split("\n", 1)
+    ]
+
+    return [
+        Sequence(sequence=seq, tag=tag) for seq, tag in zip(lines[1::2], lines[::2])
+    ]
+
+def any_file_fasta_reader_whole(fasta_file: PathLike) -> List[str]:
+    if Path(fasta_file).is_file():
+        fasta_files = [fasta_file]
+    else:
+        fasta_files = Path(fasta_file).glob("*.fasta")
+
+    sequences = []
+    for p in fasta_files:
+        sequences.extend(read_fasta(p))
+
+    return sequences
+
+def write_fasta(
+    sequences: Union[Sequence, List[Sequence]], fasta_file: PathLike, mode: str = "w"
+) -> None:
+    """Write or append sequences to a fasta file."""
+    seqs = [sequences] if isinstance(sequences, Sequence) else sequences
+    with open(fasta_file, mode) as f:
+        for seq in seqs:
+            f.write(f">{seq.tag}\n{seq.sequence}\n")
+            
+    
+def make_str_div(seq, n):
+    remainder = len(seq) % n
+    #print(remainder)
+    if remainder != 0:
+        seq = seq[:-remainder]
+    
+    return seq
+
+def make_perfect_fasta(current_fasta_files: PathLike, write_fasta_file: str, mode: str = "w"):
+    """ Create a new fasta file with the 'proper' sequences"""
+    
+    seqs_and_tags = any_file_fasta_reader_whole(current_fasta_files)
+    sequences = [make_str_div(seq.sequence.upper(), 3) for seq in seqs_and_tags]
+    tags = [seq.tag for seq in seqs_and_tags]
+
+    valid_inds = [
+        i
+        for i, sequence in enumerate(sequences)
+        
+        if gc_fraction(sequence) > 0.0
+        and gc_fraction(sequence) < 100.0
+        and len(sequence) >= 3
+    ]
+    refined_seqs = [sequences[i] for i in valid_inds]
+    refined_tags = [tags[i] for i in valid_inds]
+    
+    with open(write_fasta_file, mode) as f:
+        for seq, tag in zip(refined_seqs, refined_tags):
+            f.write(f">{seq}\n{tag}\n")
+            
+    
+
+make_perfect_fasta(current_fasta_files='/home/couchbucks/Downloads/all_fasta_files/mdh_natural_sequences.ffn', write_fasta_file='mdh_dataset.fasta')
