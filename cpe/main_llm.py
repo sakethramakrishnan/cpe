@@ -121,6 +121,7 @@ def main():
         fp16=config.fp16,
         load_best_model_at_end=config.load_best_model_at_end,
         save_total_limit=config.save_total_limit,
+        report_to=["wandb" if config.wandb_project else "none"],
     )
 
     # Build Tokenizer
