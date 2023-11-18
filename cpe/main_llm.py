@@ -51,7 +51,7 @@ class GenSLMTrainingConfig:
     learning_rate: float = 0.00005
     save_steps: int = 500
     load_best_model_at_end: bool = True
-    save_total_limit: int = 5
+    save_total_limit: int = 1
     wandb_project: str = ""  # Set to empty string to turn off wandb
     fp16: bool = True
     # whether to translate the DNA sequence into protein alphabets
