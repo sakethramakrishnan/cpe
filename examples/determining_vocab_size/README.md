@@ -16,9 +16,9 @@ A crucial aspect of the algorithm is the vocab size, as it directly influences t
 
 Running some experiments, we generated the following plots for each of the 3 tokenizers: 
 
-&nbsp;&nbsp;a. We determine the median number of unique tokens used at each vocab size - the mean number produced notably skewed data.
+&nbsp;&nbsp;a. We determine the median number of unique tokens used to encode each sequence for each vocab size - the mean number produced notably skewed data.
 
-&nbsp;&nbsp;b. We also calculate the percentage of the vocab size that is used in the training corpus by dividing the median number of unique tokens by the vocab size
+&nbsp;&nbsp;b. We also calculate the percentage of the vocab size that is used in the training corpus by dividing the median number of unique tokens by the vocab size.
 
 The following are results from the MDH Natural Dataset:
 
