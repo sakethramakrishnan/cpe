@@ -14,9 +14,31 @@ More specifically, we coin 3 tokenizers:
 
 A crucial aspect of the algorithm is the vocab size, as it directly influences the granularity of the tokenization process. A larger vocabulary size allows the algorithm to capture finer details and more specific subword patterns, but it also increases the chances of overfitting the tokenizer to the training corpus data. Balancing the vocabulary size is essential to ensure that the tokenizer strikes a suitable trade-off between granularity and balanced fitting, enabling the model to effectively represent the inherent structures and motifs present in the genetic sequences.
 
-Running some experiments, we generated the following plots: 
-1. We determine the median number of unique tokens used at each vocab size - the mean number produced notably skewed data.
-2. We also calculate the percentage of the vocab size that is used in the training corpus by dividing the median number of unique tokens by the vocab size
+Running some experiments, we generated the following plots for each of the 3 tokenizers: 
+
+&nbsp;&nbsp;a. We determine the median number of unique tokens used at each vocab size - the mean number produced notably skewed data.
+
+&nbsp;&nbsp;b. We also calculate the percentage of the vocab size that is used in the training corpus by dividing the median number of unique tokens by the vocab size
+
 The following are results from the MDH Natural Dataset:
 
-![Example on How BPE Works](bpe_image.jpg)
+## APE Experiments
+> 1a. APE Median Number of unique tokens
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/ape_median.jpg)
+
+> 1b. APE percentage of vocabulary used
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/ape_avg.jpg)
+
+## CPE Experiments
+> 2a. CPE Median Number of unique tokens
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/cpe_median.jpg)
+
+> 2b. CPE percentage of vocabulary used
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/cpe_avg.jpg)
+
+## NPE Experiments
+> 3a. NPE Median Number of unique tokens
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/npe_median.jpg)
+
+> 3b. NPE percentage of vocabulary used
+>> ![Example on How BPE Works](mdh_eval/mdh_plots/npe_avg.jpg)
