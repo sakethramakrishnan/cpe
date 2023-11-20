@@ -549,3 +549,88 @@ def plot_vocab_len_hist(tokenizer):
     # Display the plot
     plt.tight_layout()
     plt.show()
+
+def compute_pair_freqs(splits):
+    pair_freqs = defaultdict(int)
+    for word, freq in codon_freqs.items():
+        split = splits[word]
+        if len(split) == 1:
+            continue
+        for i in range(len(split) - 1):
+            pair = (split[i], split[i + 1])
+            pair_freqs[pair] += freq
+    return pair_freqs
+
+def plot_vocab_seq_lens(tokenizer, sequences):
+    # plot of vocab sequence lengths
+    
+    tokenized_seqs = tokenizer(
+        sequences,
+        max_length=1024,
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",
+    )
+    
+    counts = defaultdict(int)
+    for elem in tqdm(tokenized_seqs.input_ids):
+        for id in elem[1:-1]:
+            id_str = tokenizer.decode([id])
+            counts[id_str] += 1
+    # remove special tokens from being counted
+    for val in special_tokens.values():
+        if val in counts:
+            del counts[val]
+
+    vocab_occs = list(counts.values())
+    vocab_occs_filtered = [v for v in vocab_occs if v < 10000]
+
+    import pandas as pd
+
+    df = pd.DataFrame(vocab_occs_filtered)
+    print(df.describe())
+
+    # Set up the figure and axes
+    plt.figure(figsize=(10, 6))
+
+    # Plotting the histogram
+    plt.hist(vocab_occs_filtered, bins=100, color="blue", alpha=0.7)
+    plt.yscale("log")
+
+    # Setting title and labels
+    plt.title("Vocab token occurences")
+    plt.xlabel("??")
+    plt.ylabel("Frequency")
+
+    # Display the plot
+    plt.tight_layout()
+    plt.show()
+    
+def decode_grouped_context(seq: str, sep: str = " "):
+    return sep.join(CHAR_CODON[elem] for elem in seq)
+    
+def most_common_token(tokenizer, sequences):
+    tokenized_seqs = tokenizer(
+        sequences,
+        max_length=1024,
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",
+    )
+    
+    counts = defaultdict(int)
+    for elem in tqdm(tokenized_seqs.input_ids):
+        for id in elem[1:-1]:
+            id_str = tokenizer.decode([id])
+            counts[id_str] += 1
+    # remove special tokens from being counted
+    for val in special_tokens.values():
+        if val in counts:
+            del counts[val]
+
+    vocab_occs = list(counts.values())
+    common_token_idx = np.argmax(vocab_occs)
+    common_token = list(counts.keys())[common_token_idx]
+    print(f"{vocab_occs[common_token_idx]} occurences", common_token, decode_grouped_context(
+        common_token
+    ))
