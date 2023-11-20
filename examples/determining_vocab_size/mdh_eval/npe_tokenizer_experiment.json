@@ -1,0 +1,392 @@
+[
+  {
+    "vocab_size": 4,
+    "median_tokens": 7,
+    "relative_tokens": 0.6363636363636364
+  },
+  {
+    "vocab_size": 8,
+    "median_tokens": 7,
+    "relative_tokens": 0.6363636363636364
+  },
+  {
+    "vocab_size": 12,
+    "median_tokens": 8,
+    "relative_tokens": 0.6666666666666666
+  },
+  {
+    "vocab_size": 16,
+    "median_tokens": 12,
+    "relative_tokens": 0.75
+  },
+  {
+    "vocab_size": 20,
+    "median_tokens": 16,
+    "relative_tokens": 0.8
+  },
+  {
+    "vocab_size": 40,
+    "median_tokens": 35,
+    "relative_tokens": 0.875
+  },
+  {
+    "vocab_size": 60,
+    "median_tokens": 51,
+    "relative_tokens": 0.85
+  },
+  {
+    "vocab_size": 80,
+    "median_tokens": 65,
+    "relative_tokens": 0.8125
+  },
+  {
+    "vocab_size": 100,
+    "median_tokens": 75,
+    "relative_tokens": 0.75
+  },
+  {
+    "vocab_size": 200,
+    "median_tokens": 103,
+    "relative_tokens": 0.515
+  },
+  {
+    "vocab_size": 300,
+    "median_tokens": 119,
+    "relative_tokens": 0.39666666666666667
+  },
+  {
+    "vocab_size": 400,
+    "median_tokens": 130,
+    "relative_tokens": 0.325
+  },
+  {
+    "vocab_size": 500,
+    "median_tokens": 137,
+    "relative_tokens": 0.274
+  },
+  {
+    "vocab_size": 600,
+    "median_tokens": 142,
+    "relative_tokens": 0.23666666666666666
+  },
+  {
+    "vocab_size": 700,
+    "median_tokens": 145,
+    "relative_tokens": 0.20714285714285716
+  },
+  {
+    "vocab_size": 800,
+    "median_tokens": 148,
+    "relative_tokens": 0.185
+  },
+  {
+    "vocab_size": 900,
+    "median_tokens": 150,
+    "relative_tokens": 0.16666666666666666
+  },
+  {
+    "vocab_size": 1000,
+    "median_tokens": 152,
+    "relative_tokens": 0.152
+  },
+  {
+    "vocab_size": 1100,
+    "median_tokens": 153,
+    "relative_tokens": 0.1390909090909091
+  },
+  {
+    "vocab_size": 1200,
+    "median_tokens": 154,
+    "relative_tokens": 0.12833333333333333
+  },
+  {
+    "vocab_size": 1300,
+    "median_tokens": 155,
+    "relative_tokens": 0.11923076923076924
+  },
+  {
+    "vocab_size": 1400,
+    "median_tokens": 155,
+    "relative_tokens": 0.11071428571428571
+  },
+  {
+    "vocab_size": 1500,
+    "median_tokens": 156,
+    "relative_tokens": 0.104
+  },
+  {
+    "vocab_size": 1600,
+    "median_tokens": 156,
+    "relative_tokens": 0.0975
+  },
+  {
+    "vocab_size": 1700,
+    "median_tokens": 157,
+    "relative_tokens": 0.09235294117647058
+  },
+  {
+    "vocab_size": 1800,
+    "median_tokens": 157,
+    "relative_tokens": 0.08722222222222223
+  },
+  {
+    "vocab_size": 1900,
+    "median_tokens": 157,
+    "relative_tokens": 0.08263157894736842
+  },
+  {
+    "vocab_size": 2000,
+    "median_tokens": 157,
+    "relative_tokens": 0.0785
+  },
+  {
+    "vocab_size": 2100,
+    "median_tokens": 158,
+    "relative_tokens": 0.07523809523809524
+  },
+  {
+    "vocab_size": 2200,
+    "median_tokens": 158,
+    "relative_tokens": 0.07181818181818182
+  },
+  {
+    "vocab_size": 2300,
+    "median_tokens": 158,
+    "relative_tokens": 0.06869565217391305
+  },
+  {
+    "vocab_size": 2400,
+    "median_tokens": 158,
+    "relative_tokens": 0.06583333333333333
+  },
+  {
+    "vocab_size": 2500,
+    "median_tokens": 158,
+    "relative_tokens": 0.0632
+  },
+  {
+    "vocab_size": 2600,
+    "median_tokens": 158,
+    "relative_tokens": 0.06076923076923077
+  },
+  {
+    "vocab_size": 2700,
+    "median_tokens": 158,
+    "relative_tokens": 0.05851851851851852
+  },
+  {
+    "vocab_size": 2800,
+    "median_tokens": 158,
+    "relative_tokens": 0.056428571428571425
+  },
+  {
+    "vocab_size": 2900,
+    "median_tokens": 158,
+    "relative_tokens": 0.05448275862068966
+  },
+  {
+    "vocab_size": 3000,
+    "median_tokens": 158,
+    "relative_tokens": 0.05266666666666667
+  },
+  {
+    "vocab_size": 3100,
+    "median_tokens": 158,
+    "relative_tokens": 0.05096774193548387
+  },
+  {
+    "vocab_size": 3200,
+    "median_tokens": 158,
+    "relative_tokens": 0.049375
+  },
+  {
+    "vocab_size": 3300,
+    "median_tokens": 158,
+    "relative_tokens": 0.04787878787878788
+  },
+  {
+    "vocab_size": 3400,
+    "median_tokens": 158,
+    "relative_tokens": 0.04647058823529412
+  },
+  {
+    "vocab_size": 3500,
+    "median_tokens": 158,
+    "relative_tokens": 0.045142857142857144
+  },
+  {
+    "vocab_size": 3600,
+    "median_tokens": 158,
+    "relative_tokens": 0.04388888888888889
+  },
+  {
+    "vocab_size": 3700,
+    "median_tokens": 158,
+    "relative_tokens": 0.042702702702702704
+  },
+  {
+    "vocab_size": 3800,
+    "median_tokens": 158,
+    "relative_tokens": 0.041578947368421056
+  },
+  {
+    "vocab_size": 3900,
+    "median_tokens": 158,
+    "relative_tokens": 0.04051282051282051
+  },
+  {
+    "vocab_size": 4000,
+    "median_tokens": 158,
+    "relative_tokens": 0.0395
+  },
+  {
+    "vocab_size": 4100,
+    "median_tokens": 158,
+    "relative_tokens": 0.03853658536585366
+  },
+  {
+    "vocab_size": 4200,
+    "median_tokens": 158,
+    "relative_tokens": 0.03761904761904762
+  },
+  {
+    "vocab_size": 4300,
+    "median_tokens": 158,
+    "relative_tokens": 0.036744186046511626
+  },
+  {
+    "vocab_size": 4400,
+    "median_tokens": 158,
+    "relative_tokens": 0.03590909090909091
+  },
+  {
+    "vocab_size": 4500,
+    "median_tokens": 158,
+    "relative_tokens": 0.035111111111111114
+  },
+  {
+    "vocab_size": 4600,
+    "median_tokens": 158,
+    "relative_tokens": 0.03434782608695652
+  },
+  {
+    "vocab_size": 4700,
+    "median_tokens": 158,
+    "relative_tokens": 0.03361702127659574
+  },
+  {
+    "vocab_size": 4800,
+    "median_tokens": 157,
+    "relative_tokens": 0.03270833333333333
+  },
+  {
+    "vocab_size": 4900,
+    "median_tokens": 157,
+    "relative_tokens": 0.032040816326530615
+  },
+  {
+    "vocab_size": 5000,
+    "median_tokens": 157,
+    "relative_tokens": 0.0314
+  },
+  {
+    "vocab_size": 5100,
+    "median_tokens": 157,
+    "relative_tokens": 0.030784313725490196
+  },
+  {
+    "vocab_size": 5200,
+    "median_tokens": 157,
+    "relative_tokens": 0.030192307692307692
+  },
+  {
+    "vocab_size": 5300,
+    "median_tokens": 157,
+    "relative_tokens": 0.029622641509433962
+  },
+  {
+    "vocab_size": 5400,
+    "median_tokens": 157,
+    "relative_tokens": 0.029074074074074075
+  },
+  {
+    "vocab_size": 5500,
+    "median_tokens": 157,
+    "relative_tokens": 0.028545454545454544
+  },
+  {
+    "vocab_size": 5600,
+    "median_tokens": 157,
+    "relative_tokens": 0.028035714285714285
+  },
+  {
+    "vocab_size": 5700,
+    "median_tokens": 157,
+    "relative_tokens": 0.027543859649122808
+  },
+  {
+    "vocab_size": 5800,
+    "median_tokens": 156,
+    "relative_tokens": 0.02689655172413793
+  },
+  {
+    "vocab_size": 5900,
+    "median_tokens": 156,
+    "relative_tokens": 0.026440677966101694
+  },
+  {
+    "vocab_size": 6000,
+    "median_tokens": 156,
+    "relative_tokens": 0.026
+  },
+  {
+    "vocab_size": 6100,
+    "median_tokens": 156,
+    "relative_tokens": 0.025573770491803278
+  },
+  {
+    "vocab_size": 6200,
+    "median_tokens": 156,
+    "relative_tokens": 0.025161290322580646
+  },
+  {
+    "vocab_size": 6300,
+    "median_tokens": 156,
+    "relative_tokens": 0.024761904761904763
+  },
+  {
+    "vocab_size": 6400,
+    "median_tokens": 156,
+    "relative_tokens": 0.024375
+  },
+  {
+    "vocab_size": 6500,
+    "median_tokens": 156,
+    "relative_tokens": 0.024
+  },
+  {
+    "vocab_size": 6600,
+    "median_tokens": 156,
+    "relative_tokens": 0.023636363636363636
+  },
+  {
+    "vocab_size": 6700,
+    "median_tokens": 155,
+    "relative_tokens": 0.023134328358208955
+  },
+  {
+    "vocab_size": 6800,
+    "median_tokens": 155,
+    "relative_tokens": 0.022794117647058822
+  },
+  {
+    "vocab_size": 6900,
+    "median_tokens": 155,
+    "relative_tokens": 0.02246376811594203
+  },
+  {
+    "vocab_size": 7000,
+    "median_tokens": 155,
+    "relative_tokens": 0.02214285714285714
+  }
+]
