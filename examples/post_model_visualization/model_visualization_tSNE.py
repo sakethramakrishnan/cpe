@@ -1,26 +1,16 @@
 import functools
-import time
-import warnings
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-from contextlib import ExitStack
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from all_cluster_visualization import PlotClustersData
-from Bio import SeqIO  # type: ignore[import]
-from main_llm import get_model, get_sequences, get_tokenizer
+from all_cluster_visualization import PlotClustersData# type: ignore[import]
 from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import BatchEncoding, PreTrainedTokenizerFast
-
 from utils import (
     gc_content,
     get_label_dict,
@@ -94,7 +84,7 @@ CODON_CHAR = {
     "TTG": "9",
     "TCC": "!",
     "TGA": "@",
-    "XXX": "*"
+    "XXX": "*",
 }
 
 

@@ -16,7 +16,6 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-
 MODEL_DISPATCH = {
     "GPTNeoXForCausalLM": GPTNeoXForCausalLM,
     "BertForMaskedLM": BertForMaskedLM,

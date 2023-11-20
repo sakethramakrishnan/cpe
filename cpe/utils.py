@@ -7,15 +7,16 @@ from typing import List, Union
 
 PathLike = Union[str, Path]
 
-import os
 import random
 import re
 import time
 from collections import Counter, defaultdict
 
+import matplotlib.pyplot as plt
+import pandas as pd
 import tqdm
-from Bio.SeqUtils import gc_fraction
 from Bio.Seq import translate
+from Bio.SeqUtils import gc_fraction
 from pydantic import BaseModel
 
 
@@ -96,8 +97,10 @@ CODON_TO_CHAR = {
 
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
+
 def group_and_contextualize_cpe_training(seq: str, k: int = 3):
     return "".join(CODON_TO_CHAR.get(seq[i : i + k]) for i in range(0, len(seq), k))
+
 
 def group_and_contextualize(
     seq: str, num_char_per_token: int, convert_to_aa: bool, tokenizer_type: str
@@ -405,6 +408,7 @@ def any_file_fasta_reader(fasta_file: PathLike) -> List[str]:
 
     return sequences
 
+
 class Sequence(BaseModel):
     sequence: str
     """Biological sequence (Nucleotide sequence)."""
@@ -425,6 +429,7 @@ def read_fasta(fasta_file: PathLike) -> List[Sequence]:
         Sequence(sequence=seq, tag=tag) for seq, tag in zip(lines[1::2], lines[::2])
     ]
 
+
 def any_file_fasta_reader_whole(fasta_file: PathLike) -> List[str]:
     if Path(fasta_file).is_file():
         fasta_files = [fasta_file]
@@ -437,6 +442,7 @@ def any_file_fasta_reader_whole(fasta_file: PathLike) -> List[str]:
 
     return sequences
 
+
 def write_fasta(
     sequences: Union[Sequence, List[Sequence]], fasta_file: PathLike, mode: str = "w"
 ) -> None:
@@ -445,39 +451,101 @@ def write_fasta(
     with open(fasta_file, mode) as f:
         for seq in seqs:
             f.write(f">{seq.tag}\n{seq.sequence}\n")
-            
-    
+
+
 def make_str_div(seq, n):
     remainder = len(seq) % n
-    #print(remainder)
+    # print(remainder)
     if remainder != 0:
         seq = seq[:-remainder]
-    
+
     return seq
 
-def make_perfect_fasta(current_fasta_files: PathLike, write_fasta_file: str, mode: str = "w"):
-    """ Create a new fasta file with the 'proper' sequences"""
-    
+
+def make_perfect_fasta(
+    current_fasta_files: PathLike, write_fasta_file: str, mode: str = "w"
+):
+    """Create a new fasta file with the 'proper' sequences"""
+
     seqs_and_tags = any_file_fasta_reader_whole(current_fasta_files)
     sequences = [make_str_div(seq.sequence.upper(), 3) for seq in seqs_and_tags]
     tags = [seq.tag for seq in seqs_and_tags]
 
     valid_inds = []
-    
+
     refined_seqs = []
-    
+
     for i, sequence in enumerate(sequences):
-        if gc_fraction(sequence) > 0.0 and gc_fraction(sequence) < 100.0 and len(sequence) >= 3:
+        if (
+            gc_fraction(sequence) > 0.0
+            and gc_fraction(sequence) < 100.0
+            and len(sequence) >= 3
+        ):
             codon_list = seq_to_codon_list(sequence)
             replaced_codon_list = replace_invalid_codons(codon_list)
             refined_seqs.append("".join(replaced_codon_list))
             valid_inds.append(i)
-            
-    
+
     refined_tags = [tags[i] for i in valid_inds]
-    
+
     with open(write_fasta_file, mode) as f:
         for seq, tag in zip(refined_seqs, refined_tags):
             f.write(f">{tag}\n{seq}\n")
 
-make_perfect_fasta("/home/couchbucks/Downloads/all_fasta_files/mdh_natural_sequences.ffn", "mdh_natural_dataset.fasta")
+
+def plot_tokenized_len_hist(tokenizer, sequences: list[Sequence]):
+    tokenized_seqs = tokenizer(
+        sequences,
+        max_length=1024,
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",
+    )
+    data = {
+        "input_ids": tokenized_seqs.input_ids.tolist(),
+        "attention_mask": tokenized_seqs.attention_mask.tolist(),
+    }
+
+    dataset = Dataset.from_dict(data)
+    print(dataset)
+
+    tokenized_lens = [sum(elem["attention_mask"]) for elem in dataset]
+    pd.DataFrame(tokenized_lens).describe()
+
+    # Set up the figure and axes
+    plt.figure(figsize=(10, 6))
+
+    # Plotting the histogram
+    plt.hist(tokenized_lens, bins=50, color="blue", alpha=0.7)
+
+    # Setting title and labels
+    plt.title(current_tokenizer_name)
+    plt.xlabel("Tokenized Length")
+    plt.ylabel("Frequency")
+
+    # Display the plot
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_vocab_len_hist(tokenizer):
+    vocab_lens = [len(elem) for elem in tokenizer.get_vocab().keys()]
+
+    df = pd.DataFrame(vocab_lens)
+    print(df.describe())
+
+    # Set up the figure and axes
+    plt.figure(figsize=(10, 6))
+
+    # Plotting the histogram
+    plt.hist(vocab_lens, bins=50, color="blue", alpha=0.7)
+    plt.yscale("log")
+
+    # Setting title and labels
+    plt.title("Vocab lengths")
+    plt.xlabel("Sequence Motif Length")
+    plt.ylabel("Frequency")
+
+    # Display the plot
+    plt.tight_layout()
+    plt.show()

@@ -2,9 +2,7 @@ from typing import Any, Dict, List
 
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
-
 from utils import any_file_fasta_reader, filter_sequences_by_gc, group_and_contextualize
-
 
 # from typing import Callable, Optional
 
