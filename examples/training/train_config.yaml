@@ -1,4 +1,4 @@
-eval_steps: 100
+eval_steps: 1
 evaluation_strategy: steps
 fp16: false
 gradient_accumulation_steps: 2
@@ -7,14 +7,14 @@ load_best_model_at_end: true
 logging_steps: 500
 logging_strategy: steps
 num_train_epochs: 50
-output_dir: bert_baseline_codon_3m_mdh
+output_dir: checkpoints/baselines/bert_baseline_codon_3m_mdh
 per_device_eval_batch_size: 64
 per_device_train_batch_size: 32
-save_steps: 100
+save_steps: 2
 save_total_limit: 5
 tokenizer_path: tokenizer_json_files/codon_wordlevel_71vocab.json
-train_path: /cpe/data/datasets/mdh_natural_dataset.fasta
-validation_path: /cpe/data/datasets/mdh_natural_dataset.fasta
+train_path: ../data/datasets/mdh_natural_dataset.fasta
+validation_path: ../data/datasets/mdh_natural_dataset.fasta
 wandb_project: bert_baseline_codon_3m_mdh
 warmup_steps: 1000
 weight_decay: 0.01

@@ -59,13 +59,14 @@ class GenSLMTrainingConfig:
     def __post_init__(self):
         # Setting this environment variable enables wandb logging
         if self.wandb_project:
-            os.environ["WANDB_DISABLED"] = "true"
+            #os.environ["WANDB_DISABLED"] = "true"
             os.environ["WANDB_PROJECT"] = self.wandb_project
             # Only resume a run if the output path alrimport eady exists
             resume = os.path.exists(self.output_dir)
             Path(self.output_dir).mkdir(exist_ok=True, parents=True)
             wandb.init(dir=self.output_dir, resume=resume)
-            wandb.config.update({"train_config": asdict(self)})
+            
+            wandb.config.update({"train_config": asdict(self)}, allow_val_change=True)
 
         # Create the output directory if it doesn't exist
         Path(self.output_dir).mkdir(exist_ok=True, parents=True)
