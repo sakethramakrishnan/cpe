@@ -1,0 +1,314 @@
+[
+  {
+    "vocab_size": 4,
+    "mean_tokenized_sequence_len": 965.7148044006443
+  },
+  {
+    "vocab_size": 8,
+    "mean_tokenized_sequence_len": 965.7148044006443
+  },
+  {
+    "vocab_size": 12,
+    "mean_tokenized_sequence_len": 882.3699325707734
+  },
+  {
+    "vocab_size": 16,
+    "mean_tokenized_sequence_len": 686.0682755043542
+  },
+  {
+    "vocab_size": 20,
+    "mean_tokenized_sequence_len": 597.5337828615108
+  },
+  {
+    "vocab_size": 40,
+    "mean_tokenized_sequence_len": 433.26450274357785
+  },
+  {
+    "vocab_size": 60,
+    "mean_tokenized_sequence_len": 381.38161666348174
+  },
+  {
+    "vocab_size": 80,
+    "mean_tokenized_sequence_len": 353.1489721820316
+  },
+  {
+    "vocab_size": 100,
+    "mean_tokenized_sequence_len": 335.3351532854686
+  },
+  {
+    "vocab_size": 200,
+    "mean_tokenized_sequence_len": 293.6007480003276
+  },
+  {
+    "vocab_size": 300,
+    "mean_tokenized_sequence_len": 272.4689470666921
+  },
+  {
+    "vocab_size": 400,
+    "mean_tokenized_sequence_len": 258.18339657667
+  },
+  {
+    "vocab_size": 500,
+    "mean_tokenized_sequence_len": 247.9819278752969
+  },
+  {
+    "vocab_size": 600,
+    "mean_tokenized_sequence_len": 240.3833638175316
+  },
+  {
+    "vocab_size": 700,
+    "mean_tokenized_sequence_len": 234.39796893341705
+  },
+  {
+    "vocab_size": 800,
+    "mean_tokenized_sequence_len": 229.47334225109879
+  },
+  {
+    "vocab_size": 900,
+    "mean_tokenized_sequence_len": 225.3328874450602
+  },
+  {
+    "vocab_size": 1000,
+    "mean_tokenized_sequence_len": 221.79318063934917
+  },
+  {
+    "vocab_size": 1100,
+    "mean_tokenized_sequence_len": 218.65616554284622
+  },
+  {
+    "vocab_size": 1200,
+    "mean_tokenized_sequence_len": 215.89642652398243
+  },
+  {
+    "vocab_size": 1300,
+    "mean_tokenized_sequence_len": 213.4616308591084
+  },
+  {
+    "vocab_size": 1400,
+    "mean_tokenized_sequence_len": 211.25855150009554
+  },
+  {
+    "vocab_size": 1500,
+    "mean_tokenized_sequence_len": 209.25513908984195
+  },
+  {
+    "vocab_size": 1600,
+    "mean_tokenized_sequence_len": 207.4124921514564
+  },
+  {
+    "vocab_size": 1700,
+    "mean_tokenized_sequence_len": 205.70301111080778
+  },
+  {
+    "vocab_size": 1800,
+    "mean_tokenized_sequence_len": 204.1013349348912
+  },
+  {
+    "vocab_size": 1900,
+    "mean_tokenized_sequence_len": 202.59815456853485
+  },
+  {
+    "vocab_size": 2000,
+    "mean_tokenized_sequence_len": 201.1898938057929
+  },
+  {
+    "vocab_size": 2100,
+    "mean_tokenized_sequence_len": 199.86033687314023
+  },
+  {
+    "vocab_size": 2200,
+    "mean_tokenized_sequence_len": 198.59908274412382
+  },
+  {
+    "vocab_size": 2300,
+    "mean_tokenized_sequence_len": 197.41093609238078
+  },
+  {
+    "vocab_size": 2400,
+    "mean_tokenized_sequence_len": 196.2841309273566
+  },
+  {
+    "vocab_size": 2500,
+    "mean_tokenized_sequence_len": 195.20944009172558
+  },
+  {
+    "vocab_size": 2600,
+    "mean_tokenized_sequence_len": 194.1868635854877
+  },
+  {
+    "vocab_size": 2700,
+    "mean_tokenized_sequence_len": 193.21533673664382
+  },
+  {
+    "vocab_size": 2800,
+    "mean_tokenized_sequence_len": 192.28740684120007
+  },
+  {
+    "vocab_size": 2900,
+    "mean_tokenized_sequence_len": 191.39941579536458
+  },
+  {
+    "vocab_size": 3000,
+    "mean_tokenized_sequence_len": 190.54636783052607
+  },
+  {
+    "vocab_size": 3100,
+    "mean_tokenized_sequence_len": 189.726843384019
+  },
+  {
+    "vocab_size": 3200,
+    "mean_tokenized_sequence_len": 188.93813982692257
+  },
+  {
+    "vocab_size": 3300,
+    "mean_tokenized_sequence_len": 188.17717234036743
+  },
+  {
+    "vocab_size": 3400,
+    "mean_tokenized_sequence_len": 187.4420572738937
+  },
+  {
+    "vocab_size": 3500,
+    "mean_tokenized_sequence_len": 186.72973710791408
+  },
+  {
+    "vocab_size": 3600,
+    "mean_tokenized_sequence_len": 186.03857388550682
+  },
+  {
+    "vocab_size": 3700,
+    "mean_tokenized_sequence_len": 185.3696595779531
+  },
+  {
+    "vocab_size": 3800,
+    "mean_tokenized_sequence_len": 184.72130162976714
+  },
+  {
+    "vocab_size": 3900,
+    "mean_tokenized_sequence_len": 184.09505610002458
+  },
+  {
+    "vocab_size": 4000,
+    "mean_tokenized_sequence_len": 183.49032240452075
+  },
+  {
+    "vocab_size": 4100,
+    "mean_tokenized_sequence_len": 182.90314214736154
+  },
+  {
+    "vocab_size": 4200,
+    "mean_tokenized_sequence_len": 182.33253255439382
+  },
+  {
+    "vocab_size": 4300,
+    "mean_tokenized_sequence_len": 181.77549070459446
+  },
+  {
+    "vocab_size": 4400,
+    "mean_tokenized_sequence_len": 181.23207119652753
+  },
+  {
+    "vocab_size": 4500,
+    "mean_tokenized_sequence_len": 180.70235592803908
+  },
+  {
+    "vocab_size": 4600,
+    "mean_tokenized_sequence_len": 180.18618110343698
+  },
+  {
+    "vocab_size": 4700,
+    "mean_tokenized_sequence_len": 179.68226365646584
+  },
+  {
+    "vocab_size": 4800,
+    "mean_tokenized_sequence_len": 179.19011220004913
+  },
+  {
+    "vocab_size": 4900,
+    "mean_tokenized_sequence_len": 178.7090715514182
+  },
+  {
+    "vocab_size": 5000,
+    "mean_tokenized_sequence_len": 178.23766754934346
+  },
+  {
+    "vocab_size": 5100,
+    "mean_tokenized_sequence_len": 177.77549070459446
+  },
+  {
+    "vocab_size": 5200,
+    "mean_tokenized_sequence_len": 177.32439736834922
+  },
+  {
+    "vocab_size": 5300,
+    "mean_tokenized_sequence_len": 176.88313177363435
+  },
+  {
+    "vocab_size": 5400,
+    "mean_tokenized_sequence_len": 176.450847642707
+  },
+  {
+    "vocab_size": 5500,
+    "mean_tokenized_sequence_len": 176.0274903770031
+  },
+  {
+    "vocab_size": 5600,
+    "mean_tokenized_sequence_len": 175.6130326772406
+  },
+  {
+    "vocab_size": 5700,
+    "mean_tokenized_sequence_len": 175.2064098714204
+  },
+  {
+    "vocab_size": 5800,
+    "mean_tokenized_sequence_len": 174.80792225164478
+  },
+  {
+    "vocab_size": 5900,
+    "mean_tokenized_sequence_len": 174.41686003658103
+  },
+  {
+    "vocab_size": 6000,
+    "mean_tokenized_sequence_len": 174.03308672981902
+  },
+  {
+    "vocab_size": 6100,
+    "mean_tokenized_sequence_len": 173.65591984930796
+  },
+  {
+    "vocab_size": 6200,
+    "mean_tokenized_sequence_len": 173.28565968715023
+  },
+  {
+    "vocab_size": 6300,
+    "mean_tokenized_sequence_len": 172.92255193688405
+  },
+  {
+    "vocab_size": 6400,
+    "mean_tokenized_sequence_len": 172.56528623297208
+  },
+  {
+    "vocab_size": 6500,
+    "mean_tokenized_sequence_len": 172.21438126177281
+  },
+  {
+    "vocab_size": 6600,
+    "mean_tokenized_sequence_len": 171.87016461467064
+  },
+  {
+    "vocab_size": 6700,
+    "mean_tokenized_sequence_len": 171.53228140099915
+  },
+  {
+    "vocab_size": 6800,
+    "mean_tokenized_sequence_len": 171.1996123501952
+  },
+  {
+    "vocab_size": 6900,
+    "mean_tokenized_sequence_len": 170.8727034478993
+  },
+  {
+    "vocab_size": 7000,
+    "mean_tokenized_sequence_len": 170.55106330703504
+  }
+]

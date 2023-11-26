@@ -1,0 +1,63 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.12
+    cli_version: 0.16.0
+    framework: huggingface
+    huggingface_version: 4.35.0
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1701010888.815808
+    t:
+      1:
+      - 1
+      - 11
+      - 49
+      - 51
+      - 55
+      2:
+      - 1
+      - 11
+      - 49
+      - 51
+      - 55
+      3:
+      - 4
+      - 23
+      - 42
+      4: 3.10.12
+      5: 0.16.0
+      6: 4.35.0
+      8:
+      - 5
+      13: linux-x86_64
+train_config:
+  desc: null
+  value:
+    num_train_epochs: 50
+    per_device_train_batch_size: 32
+    per_device_eval_batch_size: 64
+    gradient_accumulation_steps: 2
+    model_architecture: bert
+    model_path: bert/bert_3m.json
+    tokenizer_path: tokenizer_json_files/codon_wordlevel_71vocab.json
+    output_dir: bert_baseline_codon_3m_mdh
+    train_path: /cpe/data/datasets/mdh_natural_dataset.fasta
+    validation_path: /cpe/data/datasets/mdh_natural_dataset.fasta
+    evaluation_strategy: steps
+    eval_steps: 100
+    logging_strategy: steps
+    logging_steps: 500
+    weight_decay: 0.01
+    warmup_steps: 1000
+    learning_rate: 5.0e-05
+    save_steps: 100
+    load_best_model_at_end: true
+    save_total_limit: 5
+    wandb_project: bert_baseline_codon_3m_mdh
+    fp16: false
+    tokenizer_type: protein_alphabet_wordlevel
+    convert_to_aa: false
+    num_char_per_token: 3

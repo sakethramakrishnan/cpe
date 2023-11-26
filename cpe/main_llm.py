@@ -34,11 +34,11 @@ class GenSLMTrainingConfig:
     model_architecture: str = ""
     model_path: str = ""
     tokenizer_path: str = (
-        "/home/couchbucks/Documents/saketh/LLM_sequences/test_tokenizer"
+        ""
     )
-    output_dir: str = "bpe_llm_out"
-    train_path: str = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
-    validation_path: str = "/home/couchbucks/Downloads/all_fasta_files/training/GCA_000977415.2_Sc_YJM1385_v1_genomic_extracted_sequences.fasta"
+    output_dir: str = ""
+    train_path: str = ""
+    validation_path: str = ""
     evaluation_strategy: str = "steps"
     eval_steps: int = 100
     logging_strategy: str = "steps"
@@ -49,10 +49,10 @@ class GenSLMTrainingConfig:
     save_steps: int = 500
     load_best_model_at_end: bool = True
     save_total_limit: int = 1
-    wandb_project: str = ""  # Set to empty string to turn off wandb
+    wandb_project: str = ""  # Set to empty string to turn off wandb, otherwise, set as the project name
     fp16: bool = True
     # whether to translate the DNA sequence into protein alphabets
-    tokenizer_type: str = "protein_alphabet_wordlevel"
+    tokenizer_type: str = ""
     convert_to_aa: bool = True
     num_char_per_token: int = 1  # how many characters per token
 
@@ -90,8 +90,8 @@ class GenSLMTrainingConfig:
 
 def main():
     """
-    example usage in terminal format
-    python3 main_llm.py --config=/home/couchbucks/Documents/saketh/LLM_sequences/cpe/examples/training/train_config.yaml
+    example usage in command line format
+    python3 main_llm.py --config=../examples/training/train_config.yaml
     """
 
     # Parse a yaml file to get the training config
@@ -169,13 +169,13 @@ def main():
         config.train_path,
         num_char_per_token=config.num_char_per_token,
         convert_to_aa=config.convert_to_aa,
-        tokenizer_type=args.tokenizer_type,
+        tokenizer_type=config.tokenizer_type,
     )
     eval_dataset = FastaDataset(
         config.validation_path,
         num_char_per_token=config.num_char_per_token,
         convert_to_aa=config.convert_to_aa,
-        tokenizer_type=args.tokenizer_type,
+        tokenizer_type=config.tokenizer_type,
     )
 
     # If the number of tokens in the tokenizer is different from the number of tokens

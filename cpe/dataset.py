@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
-from utils import any_file_fasta_reader, filter_sequences_by_gc, group_and_contextualize
+from utils import any_file_fasta_reader, group_and_contextualize
 
 # from typing import Callable, Optional
 
@@ -26,11 +26,6 @@ class FastaDataset(Dataset):
         dna_sequences = any_file_fasta_reader(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
-        # if filter_fnxs:
-        #     for filter_fnx in filter_fnxs:
-        #         dna_sequences = [filter_fnx(seq) for seq in dna_sequences]
-
-        dna_sequences = filter_sequences_by_gc(dna_sequences)
 
         self.sequences = [
             group_and_contextualize(

@@ -1,0 +1,122 @@
+{
+    "os": "Linux-6.2.0-37-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "heartbeatAt": "2023-11-26T15:01:28.913222",
+    "startedAt": "2023-11-26T15:01:28.807887",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--config=../examples/training/train_config.yaml"
+    ],
+    "state": "running",
+    "program": "/home/couchbucks/Documents/saketh/cpe/cpe/main_llm.py",
+    "codePathLocal": "main_llm.py",
+    "codePath": "cpe/main_llm.py",
+    "git": {
+        "remote": "https://github.com/braceal/cpe.git",
+        "commit": "376924d313a328b05cf949fe485032a4439b73bb"
+    },
+    "email": "saketh.ramakrishnan@gmail.com",
+    "root": "/home/couchbucks/Documents/saketh/cpe",
+    "host": "dellkanini",
+    "username": "couchbucks",
+    "executable": "/home/couchbucks/Documents/saketh/cpe/env/bin/python3",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 1683.912625,
+        "min": 1400.0,
+        "max": 1800.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1796.745,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.732,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.739,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.664,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1680.586,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1512.653,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1779.445,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1780.955,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1282.939,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1283.195,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.191,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.737,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.734,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1422.34,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.741,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.738,
+            "min": 1400.0,
+            "max": 1800.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 710.5950546264648,
+            "used": 179.00599670410156
+        }
+    },
+    "memory": {
+        "total": 14.967140197753906
+    }
+}
