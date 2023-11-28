@@ -26,6 +26,7 @@ class FastaDataset(Dataset):
         dna_sequences = any_file_fasta_reader(file_path)
         # Preprocess the sequences into codons
         # TODO: We could also use an <unk> token (this would be better)
+        
 
         self.sequences = [
             group_and_contextualize(
@@ -33,6 +34,7 @@ class FastaDataset(Dataset):
             )
             for seq in dna_sequences
         ]
+        print(len(self.sequences))
 
     def __len__(self) -> int:
         return len(self.sequences)

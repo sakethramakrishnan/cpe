@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import tqdm
 from Bio.Seq import translate
-from Bio.SeqUtils import gc_fraction
+from Bio.SeqUtils import GC
 from pydantic import BaseModel
 
 
@@ -493,7 +493,7 @@ def make_perfect_fasta(
             f.write(f">{tag}\n{seq}\n")
 
 
-def plot_tokenized_len_hist(tokenizer, sequences: list[Sequence]):
+def plot_tokenized_len_hist(tokenizer, sequences: list):
     tokenized_seqs = tokenizer(
         sequences,
         max_length=1024,

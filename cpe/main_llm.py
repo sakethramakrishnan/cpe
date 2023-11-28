@@ -16,6 +16,8 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
+#os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
 MODEL_DISPATCH = {
     "GPTNeoXForCausalLM": GPTNeoXForCausalLM,
     "BertForMaskedLM": BertForMaskedLM,
@@ -64,7 +66,7 @@ class GenSLMTrainingConfig:
             # Only resume a run if the output path alrimport eady exists
             resume = os.path.exists(self.output_dir)
             Path(self.output_dir).mkdir(exist_ok=True, parents=True)
-            wandb.init(dir=self.output_dir, resume=resume)
+            wandb.init(dir=self.output_dir, resume="auto")
             
             wandb.config.update({"train_config": asdict(self)}, allow_val_change=True)
 

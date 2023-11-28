@@ -1,0 +1,49 @@
+eval_steps: 100
+evaluation_strategy: steps
+fp16: false
+gradient_accumulation_steps: 2
+learning_rate: 5.0e-05
+load_best_model_at_end: true
+logging_steps: 500
+logging_strategy: steps
+num_train_epochs: 50
+output_dir: bpe_llm_out
+per_device_eval_batch_size: 64
+per_device_train_batch_size: 32
+save_steps: 100
+save_total_limit: 5
+tokenizer_path: tokenizer_json_files/codon_wordlevel_71vocab.json
+train_path: /home/couchbucks/Downloads/all_fasta_files/training/GCA_000977865.2_Sc_YJM1439_v1_genomic_extracted_sequences.fasta
+validation_path: /home/couchbucks/Downloads/all_fasta_files/training/GCA_000977865.2_Sc_YJM1439_v1_genomic_extracted_sequences.fasta
+wandb_project: ''
+warmup_steps: 1000
+weight_decay: 0.01
+
+# if tokenizer = ape_tokenizer; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+# if tokenizer = cpe_tokenizer; use:e .json files are from a few 
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = npe_tokenizer; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = codon_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = dna_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = protein_alphabet_wordlevel; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+convert_to_aa: False
+num_char_per_token: 3
+model_architecture: 'bert'
+model_path: "bert/bert_3m.json"
