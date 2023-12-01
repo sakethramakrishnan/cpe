@@ -636,4 +636,4 @@ def most_common_token(tokenizer, sequences):
     ))
     
     
-make_perfect_fasta("/home/couchbucks/Documents/saketh/cpe/data/datasets/mdh/train.fasta", "training_refined_mdh")
+make_perfect_fasta("/home/couchbucks/Documents/saketh/cpe/data/datasets/mdh/valid.fasta", "valid_refined_mdh.fasta")
