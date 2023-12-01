@@ -162,7 +162,7 @@ def filter_sequences_by_gc(dna_sequences: List[List[str]]) -> List[str]:
     """all sequences that have a GC content of 0% or 100%, we eliminate from the list of sequences"""
     refined_sequences = []
     for seq in dna_sequences:
-        gc_content = gc_fraction(seq)
+        gc_content = GC(seq)
         if gc_content > 0.0 and gc_content < 100.0 and len(seq) >= 3:
             refined_sequences.append(seq)
 
@@ -181,7 +181,7 @@ def find_invalid_seqs(dna_sequences: List[List[str]]) -> List[str]:
     bad_sequences = []
     bad_indices = []
     for i, seq in enumerate(dna_sequences):
-        gc_content = gc_fraction(seq)
+        gc_content = GC(seq)
         if (
             gc_content == 0.0
             or gc_content == 100.0
@@ -247,7 +247,7 @@ def gc_content(seqs: List[str]) -> List[float]:
     List
         GC content of each DNA sequence.
     """
-    return [gc_fraction(seq) for seq in seqs]
+    return [GC(seq) for seq in seqs]
 
 
 def check_bases(seq):
@@ -477,8 +477,8 @@ def make_perfect_fasta(
 
     for i, sequence in enumerate(sequences):
         if (
-            gc_fraction(sequence) > 0.0
-            and gc_fraction(sequence) < 100.0
+            GC(sequence) > 0.0
+            and GC(sequence) < 100.0
             and len(sequence) >= 3
         ):
             codon_list = seq_to_codon_list(sequence)
@@ -634,3 +634,6 @@ def most_common_token(tokenizer, sequences):
     print(f"{vocab_occs[common_token_idx]} occurences", common_token, decode_grouped_context(
         common_token
     ))
+    
+    
+make_perfect_fasta("/home/couchbucks/Documents/saketh/cpe/data/datasets/mdh/train.fasta", "training_refined_mdh")
