@@ -369,3 +369,6 @@ GitHub.sublime-settings
 
 #IRIS dataset
 *.data
+
+cpe/checkpoints/baselines/codon_wordlevel/
+cpe/checkpoints/bpe/cpe_tokenizer/

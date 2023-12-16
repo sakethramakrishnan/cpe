@@ -5,39 +5,9 @@ import numpy.typing as npt
 import pandas as pd
 import seaborn as sns
 from Bio import SeqUtils
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from Bio.Seq import translate
 
-
-def plot_2d_scatter(points: npt.ArrayLike, hue: npt.ArrayLike) -> None:
-    """Show a 2d scatter plot of `points` colored acording to `hue`.
-
-    Parameters
-    ----------
-    points: npt.ArrayLike
-      A (N, 2) array of (x,y) coordinates to plot.
-
-    hue: npt.ArrayLike
-      A (N,) array of hue values associated with each point (e.g., class labels,
-      scalar descriptors)
-    """
-    # Represent the points array with a dataframe to give labels to x,y axes
-    plot_df = pd.DataFrame({"x": points[:, 0], "y": points[:, 1]})
-
-    # Plot the scatter plot using seaborn style
-    with plt.style.context("seaborn-poster"):
-        fig = plt.figure(figsize=(10, 10))
-        ax = sns.scatterplot(
-            data=plot_df,
-            x="x",
-            y="y",
-            palette="viridis",
-            hue=hue,
-            legend=True,
-            edgecolor="white",
-            linewidth=0,
-            s=25,
-        )
-        plt.xlabel(r"$z_1$", fontsize=22)
-        plt.ylabel(r"$z_2$", fontsize=22)
 
 
 def gc_content(seqs: List[str]) -> List[float]:
@@ -54,6 +24,7 @@ def gc_content(seqs: List[str]) -> List[float]:
         GC content of each DNA sequence.
     """
     return [SeqUtils.gc_fraction(seq) for seq in seqs]
+
 
 
 class PlotClustersData:
@@ -87,24 +58,23 @@ class PlotClustersData:
       A string with the plot of the title describing the plot
 
 
-
-
-    !!!NOTE: This Class only provides the Pandas dataframe and the hue for your data!!!
-
     You must run this with the plotting code shown below as plot_df(Pandas dataframe) and hue(hue)
     """
 
     def __init__(
         self,
+        sequences: List[str],
         tsne_hidden_states: npt.ArrayLike,
         labels: npt.ArrayLike,
-        gc_content: npt.ArrayLike,
         label_dict: Dict,
+        tokenizer_type: str
     ):
+        self.sequences = sequences
         self.tsne_hidden_states = tsne_hidden_states
         self.labels = labels
-        self.gc_content = gc_content
         self.label_dict = label_dict
+        self.amino_acids = [translate(sequence, stop_symbol="") for sequence in self.sequences]
+        self.tokenizer_type = tokenizer_type
 
         # label_dict is a dictionary with each key being the str value of the label
         # and the value being its corresponding 1-n labels' label num
@@ -121,16 +91,114 @@ class PlotClustersData:
             list(self.label_dict.values()).index(label_mask)
         ]
         plt_title = f"Only {type_of_seq} colored w/ GC"
-        return plot_df, hue, plt_title
+        
+        cbar_label = 'GC Content'
+        
+        return plot_df, hue, plt_title, cbar_label
 
-    def plot_both_clusters_gc_content(self):
+    def plot_gc_content(self):
+        gc_content_of_seqs = gc_content(self.sequences)
         """This will plot both clusters, and shade them according to their gc content"""
         plot_df = pd.DataFrame(
             {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
         )
-        hue = list(self.gc_content)
-        plt_title = "All types colored w/ GC"
-        return plot_df, hue, plt_title
+        hue = gc_content_of_seqs
+        plt_title = f"GC Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'GC Content'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_seq_len(self):
+        seq_lens = [len(seq) for seq in self.sequences]
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = seq_lens
+        plt_title = f"Sequence Lengths Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Sequence Length'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    
+    def plot_molecular_weight(self):
+        molecular_weights = [ProteinAnalysis(protein_aa).molecular_weight() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = molecular_weights
+        plt_title = f"Molecular Weights Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Molecular Weights'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_isoelectric_point(self):
+        isoelectric_point = [ProteinAnalysis(protein_aa).isoelectric_point() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = isoelectric_point
+        plt_title = f"Isoelectric Point Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Isoelectric Point'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_aromaticity(self):
+        aromaticity = [ProteinAnalysis(protein_aa).aromaticity() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = aromaticity
+        plt_title = f"Aromaticity Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Aromaticity'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_instability_index(self):
+        instability_index = [ProteinAnalysis(protein_aa).instability_index() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = instability_index
+        plt_title = f"Instability Index Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Instability'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_flexibility(self):
+        flexibility = [ProteinAnalysis(protein_aa).flexibility() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = flexibility
+        plt_title = f"Flexibility Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Flexibility'
+        
+        return plot_df, hue, plt_title, cbar_label
+    
+    def plot_molar_extinction_coefficient(self):
+        molar_extinction_coeff = [ProteinAnalysis(protein_aa).molar_extinction_coefficient() for protein_aa in self.amino_acids]
+        
+        plot_df = pd.DataFrame(
+            {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
+        )
+        hue = molar_extinction_coeff
+        plt_title = f"Molar Extinction Coefficient Coloring Using {self.tokenizer_type}"
+        
+        cbar_label = 'Molar Extinction Coefficient'
+        
+        return plot_df, hue, plt_title, cbar_label
 
     def separate_clusters_labels(self):
         """This will plot both clusters, and shade them according to their labels (two clusters)"""
@@ -138,39 +206,37 @@ class PlotClustersData:
             {"x": self.tsne_hidden_states[:, 0], "y": self.tsne_hidden_states[:, 1]}
         )
         hue = list(self.labels)
-        plt_title = "All types colored w/ label"
-        return plot_df, hue, plt_title
+        plt_title = "All types colored with label"
+        
+        cbar_label = 'Label'
+        
+        return plot_df, hue, plt_title, cbar_label
 
-    def plot_clusters(self, plot_df, hue, plot_title):
-        # PLOTTING CODE:
-        with plt.style.context("seaborn-poster"):
-            fig = plt.figure(figsize=(10, 10))  # noqa
-            ax = sns.scatterplot(
-                data=plot_df,
-                x="x",
-                y="y",
-                palette="viridis",
-                hue=hue,
-                legend=True,
-                edgecolor="white",
-                linewidth=0,
-                s=25,
-            )
-            plt.xlabel(r"$z_1$", fontsize=22)
-            plt.ylabel(r"$z_2$", fontsize=22)
-            plt.title(plot_title)
-            # plt.suptitle(f"{label_paint_name} {label_note}")
-            plt.rc("legend", fontsize=22)
-            ax.tick_params(axis="both", which="major", labelsize=22)
-            ax.tick_params(axis="both", which="minor", labelsize=22)
-            sns.move_legend(
-                ax,
-                "lower center",
-                bbox_to_anchor=(0.5, -0.25),
-                ncol=4,
-                title=None,
-                frameon=False,
-            )
+    def plot_clusters(self, plot_df, hue, color_label):
+        """
+        Create a 2D scatter plot with colors and a color bar.
+        Parameters:
+            x: x-axis data
+            y: y-axis data
+            colors: color data for each point
+            color_label: label for the color bar
+        """
+        
+        sc = plt.scatter(plot_df['x'], plot_df['y'], c=hue, cmap='viridis', s=10)
+
+        # Add color bar
+        cbar = plt.colorbar(sc)
+        cbar.set_label(color_label)
+        # Set axis labels
+        plt.xlabel(r"$z_1$", fontsize=12)
+        plt.ylabel(r"$z_2$", fontsize=12)
+
+        # Set plot title if needed
+        plt.title()
+
+        # Show the plot
+        plt.show(block=False)
+
 
 
 # TODO: Classes are best used when there is internal state to keep track of

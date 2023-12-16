@@ -97,6 +97,8 @@ CODON_TO_CHAR = {
 
 BASES = ["A", "T", "C", "G", "a", "t", "c", "g"]
 
+CHAR_TO_CODON = {v: k for k, v in CODON_TO_CHAR.items()}
+
 
 def group_and_contextualize_cpe_training(seq: str, k: int = 3):
     return "".join(CODON_TO_CHAR.get(seq[i : i + k]) for i in range(0, len(seq), k))
@@ -606,8 +608,10 @@ def plot_vocab_seq_lens(tokenizer, sequences):
     plt.tight_layout()
     plt.show()
     
-def decode_grouped_context(seq: str, sep: str = " "):
-    return sep.join(CHAR_CODON[elem] for elem in seq)
+
+
+def cpe_decode(seq, *args, **kwargs) -> str:
+        return "".join(CHAR_TO_CODON.get(c, "") for c in seq)
     
 def most_common_token(tokenizer, sequences):
     tokenized_seqs = tokenizer(
@@ -636,4 +640,3 @@ def most_common_token(tokenizer, sequences):
     ))
     
     
-make_perfect_fasta("/home/couchbucks/Documents/saketh/cpe/data/datasets/mdh/valid.fasta", "valid_refined_mdh.fasta")

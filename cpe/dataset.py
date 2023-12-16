@@ -1,11 +1,22 @@
-from typing import Any, Dict, List
-
+from typing import Any, Dict, List, Tuple
+import numpy.typing as npt
+from pathlib import Path
+import torch
+from tqdm import tqdm
 from torch.utils.data import Dataset
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
 from utils import any_file_fasta_reader, group_and_contextualize
+from transformers import BertForMaskedLM, GPTNeoXForCausalLM, PreTrainedTokenizerFast
+import os
+from torch.utils.data import DataLoader
 
 # from typing import Callable, Optional
-
+MODEL_DISPATCH = {
+    "GPTNeoXForCausalLM": GPTNeoXForCausalLM,
+    "BertForMaskedLM": BertForMaskedLM,
+    "neox": GPTNeoXForCausalLM,
+    "bert": BertForMaskedLM,
+}
 
 class FastaDataset(Dataset):
     def __init__(
@@ -44,7 +55,7 @@ class FastaDataset(Dataset):
         return self.sequences[idx]
 
 
-class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
+class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
     """Augment the underlying DataCollatorForLanguageModeling to handle
     multiple batch encoding inputs."""
 
@@ -82,3 +93,92 @@ class GenSLMCollatorForLanguageModeling(DataCollatorForLanguageModeling):
                 labels[labels == self.tokenizer.pad_token_id] = -100
             batch["labels"] = labels
         return batch
+
+
+def generate_embeddings_and_logits(model, dataloader):
+    embeddings, logits, input_ids = [], [], []
+    lsoftmax = torch.nn.LogSoftmax(dim=1)
+    with torch.no_grad():
+        for batch in tqdm(dataloader):
+            batch = batch.to(model.device)
+            outputs = model(**batch, output_hidden_states=True)
+            last_hidden_states = outputs.hidden_states[-1]
+            seq_lengths = batch.attention_mask.sum(axis=1)
+            for seq_len, hidden, logit, input_id in zip(
+                seq_lengths, last_hidden_states, outputs.logits, batch.input_ids
+            ):
+                # Get averaged embedding
+                embedding = hidden[1 : seq_len - 1, :].mean(dim=0).cpu().numpy()
+                embeddings.append(embedding)
+                # Get logits
+                # TODO: Determine if the lsoftmax should be calculated before or after the splice
+                logits.append(lsoftmax(logit[1 : seq_len - 1, :]).cpu().numpy())
+                # Get input_ids
+                input_ids.append(input_id[1 : seq_len - 1].cpu().numpy())
+
+    return np.array(embeddings), logits, input_ids
+
+
+def llm_inference(
+    tokenizer_path: Path,
+    model_type: str,
+    model_path: Path,
+    fasta_path: Path,
+    batch_size: int,
+    fasta_contains_aminoacid: bool = False,
+) -> Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]:
+    
+    
+    if os.path.isfile(Path(tokenizer_path)):
+        # These are for the .json files
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(
+            pretrained_model_name_or_path=tokenizer_path
+        )
+
+    else:
+        # These are for the bpe tokenizers
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_path)
+        
+    special_tokens = {
+            "unk_token": "[UNK]",
+            "cls_token": "[CLS]",
+            "sep_token": "[SEP]",
+            "pad_token": "[PAD]",
+            "mask_token": "[MASK]",
+            "bos_token": "[BOS]",
+            "eos_token": "[EOS]",
+        }
+
+        # for some reason, we need to add the special tokens even though they are in the json file
+    tokenizer.add_special_tokens(special_tokens)
+
+    model = MODEL_DISPATCH[model_type].from_pretrained(model_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device).eval()
+
+    if fasta_contains_aminoacid:
+        dataset = FastaAminoAcidDataset(file_path=fasta_path)
+    else:
+        dataset = FastaDataset(
+            file_path=fasta_path,
+            num_char_per_token = 3,
+            convert_to_aa = False,
+            tokenizer_type = "cpe_tokenizer"
+        )
+
+    data_collator = GenSLMColatorForLanguageModeling(
+        train_mode=False,
+        tokenizer=tokenizer,
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn=data_collator,
+        num_workers=4,
+        pin_memory=True,
+    )
+
+    embeddings, logits, input_ids = generate_embeddings_and_logits(model, dataloader)
+
+    return embeddings, logits, input_ids
