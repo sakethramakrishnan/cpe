@@ -6,7 +6,7 @@ from pathlib import Path
 
 import wandb
 import yaml
-from dataset import FastaDataset, GenSLMCollatorForLanguageModeling
+from dataset import FastaDataset, GenSLMColatorForLanguageModeling
 from transformers import (
     BertForMaskedLM,
     GPTNeoXForCausalLM,
@@ -144,9 +144,11 @@ def main():
     if Path(config.model_path).suffix == ".json":
         model_config = PretrainedConfig.from_json_file(config.model_path)
         model_config.vocab_size = tokenizer.vocab_size
-        print(tokenizer.vocab)
+        
         model_config.pad_token_id = int(tokenizer.vocab["[PAD]"])
-
+        model_config.hidden_dropout = 0.0
+        model_config.rope_scaling = None
+        
         special_tokens = {
             "unk_token": "[UNK]",
             "cls_token": "[CLS]",
@@ -186,11 +188,12 @@ def main():
     # in the model resize the input embedding layer and the MLM prediction head
 
     # custom DataCollator
-    data_collator = GenSLMCollatorForLanguageModeling(
+    data_collator = GenSLMColatorForLanguageModeling(
         train_mode=True,
         tokenizer=tokenizer,
         mlm=True,
         mlm_probability=0.15,
+        model_architecture=config.model_architecture
     )
 
     trainer = Trainer(

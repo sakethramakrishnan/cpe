@@ -59,11 +59,13 @@ class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
     """Augment the underlying DataCollatorForLanguageModeling to handle
     multiple batch encoding inputs."""
 
-    def __init__(self, train_mode: bool = False, **kwargs) -> None:
+    def __init__(self, model_architecture, train_mode: bool = False, **kwargs) -> None:
         self.train_mode = train_mode
+        self.model_architecture = model_architecture
         super().__init__(**kwargs)
 
     def tokenize(self, sequences: List[str]) -> BatchEncoding:
+        
         return self.tokenizer(
             sequences,
             return_tensors="pt",
@@ -76,7 +78,11 @@ class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
     def torch_call(self, examples: List[str]) -> Dict[str, Any]:
         # First, tokenize the batch
         batch = self.tokenize(examples)
-
+        
+        if self.model_architecture in ['neox', "NeoX", "GPT", 'gpt']:    
+            if 'token_type_ids' in batch:
+                batch.pop('token_type_ids')
+            
         # We only need to mask tokens if we are training
         if not self.train_mode:
             return batch
@@ -92,6 +98,10 @@ class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
             if self.tokenizer.pad_token_id is not None:
                 labels[labels == self.tokenizer.pad_token_id] = -100
             batch["labels"] = labels
+        
+        
+            
+        
         return batch
 
 
