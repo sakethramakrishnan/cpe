@@ -1,0 +1,52 @@
+eval_steps: 5
+evaluation_strategy: steps
+fp16: false
+gradient_accumulation_steps: 2
+learning_rate: 5.0e-05
+load_best_model_at_end: true
+logging_steps: 500
+logging_strategy: steps
+num_train_epochs: 250
+output_dir: checkpoints/baselines/bert_3m_codon_baseline_mdh
+per_device_eval_batch_size: 2
+per_device_train_batch_size: 2
+save_steps: 1500
+save_total_limit: 5
+tokenizer_path: cpe_tokenizers/cpe_tokenizer_150
+train_path: ../data/datasets/sample_fasta.fasta
+validation_path: ../data/datasets/sample_fasta.fasta
+wandb_project: ''
+warmup_steps: 1000
+weight_decay: 0.01
+
+# if tokenizer = ape_tokenizer; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+# if tokenizer = cpe_tokenizer; use:=
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = npe_tokenizer; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = codon_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = dna_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = protein_alphabet_wordlevel; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+convert_to_aa: False
+num_char_per_token: 3
+tokenizer_type: cpe_tokenizer
+model_architecture: 'bert'
+mlm: False
+mlm_probability: 0.0
+model_path: "bert/bert_3m.json"

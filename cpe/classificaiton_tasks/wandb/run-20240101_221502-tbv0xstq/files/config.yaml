@@ -1,0 +1,74 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.12
+    cli_version: 0.16.0
+    framework: huggingface
+    huggingface_version: 4.36.2
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1704165302.512375
+    t:
+      1:
+      - 1
+      - 5
+      - 11
+      - 49
+      - 53
+      - 55
+      - 71
+      2:
+      - 1
+      - 5
+      - 11
+      - 49
+      - 53
+      - 55
+      - 71
+      3:
+      - 23
+      4: 3.10.12
+      5: 0.16.0
+      6: 4.36.2
+      8:
+      - 5
+      13: linux-x86_64
+train_config:
+  desc: null
+  value:
+    num_train_epochs: 20
+    per_device_train_batch_size: 2
+    per_device_eval_batch_size: 2
+    per_device_test_batch_size: 2
+    num_workers: 4
+    bpe_vocab_size: 200
+    gradient_accumulation_steps: 2
+    model_architecture: ''
+    model_path: ''
+    num_layers: 2
+    num_attention_heads: 2
+    hidden_size: 128
+    mlm: true
+    mlm_probability:
+    - 0.15
+    output_dir: ''
+    data_path: data/sample_data
+    task_type: regression
+    evaluation_strategy: steps
+    eval_steps: 1
+    logging_strategy: steps
+    logging_steps: 500
+    weight_decay: 0.01
+    warmup_steps: 1000
+    learning_rate: 5.0e-05
+    save_steps: 500
+    max_length: 512
+    save_total_limit: 1
+    wandb_project: bpe_tokenizers
+    fp16: true
+    tokenizer_path: tokenizer_json_files/codon_wordlevel_71vocab.json
+    tokenizer_type: codon_wordlevel
+    convert_to_aa: true
+    num_char_per_token: 1
