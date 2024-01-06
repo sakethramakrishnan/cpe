@@ -3,9 +3,9 @@ from transformers import BertConfig, BertModel
 import torch
 
 class BioBERTModel(nn.Module):
-    def __init__(self, hidden_size, num_layers, num_attention_heads, num_classes):
+    def __init__(self, hidden_size, num_layers, num_attention_heads, num_classes, max_position_embeddings):
         super(BioBERTModel, self).__init__()
-        configuration = BertConfig(hidden_size=hidden_size, num_hidden_layers=num_layers, num_attention_heads=num_attention_heads)
+        configuration = BertConfig(hidden_size=hidden_size, num_hidden_layers=num_layers, num_attention_heads=num_attention_heads, max_position_embeddings=max_position_embeddings)
         self.transformer = BertModel(configuration)
         
         # additional layers for the classification / regression task

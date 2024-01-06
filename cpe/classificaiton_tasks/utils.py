@@ -186,7 +186,7 @@ def train_biological_tokenizer(data_path, task_type, tokenizer_type, vocab_size,
     else:
         logger.info(f'starting to train {tokenizer_type} tokenizer...')
         #tokenizer = train_tokenizer(batch_iterator(X_train), tokenizer_type, vocab_size)
-        tokenizer = build_bpe_tokenizer(batch_iterator(X_train), vocab_size, 'ape_tokenizer', save=False, save_name='ape_testing_100')
+        tokenizer = build_bpe_tokenizer(batch_iterator(X_train), vocab_size, tokenizer_type, save=False, save_name=f'tokenizer_type_{vocab_size}')
         #if tokenizer_type not in ['BPE', 'bpe', 'bpe_tokenizer', 'ape_tokenizer', 'cpe_tokenizer', 'npe_tokenizer']:
         #    tokenizer.enable_padding(length=max_length)
         logger.info(f'saving tokenizer to {results_path}...')
@@ -210,18 +210,18 @@ def train_biological_tokenizer(data_path, task_type, tokenizer_type, vocab_size,
     
     #X_train_ids = [torch.tensor(item).to(device) for item in X_train_ids]
     #y_train = [torch.tensor(item).to(device) for item in y_train]
-    logger.info('loaded train data to device')
+    logger.info(f'loaded train data to device with {len(y_train)} samples')
     train_dataset = BioDataGenerator(X_train, y_train, tokenizer, max_length)
 
 
     #X_valid_ids = [torch.tensor(item).to(device) for item in X_valid_ids]
     #y_valid = [torch.tensor(item).to(device) for item in y_valid]
-    logger.info('loaded valid data to device')
+    logger.info(f'loaded train data to device with {len(y_valid)} samples')
     valid_dataset = BioDataGenerator(X_valid, y_valid, tokenizer, max_length)
 
     #X_test_ids = [torch.tensor(item).to(device) for item in X_test_ids]
     #y_test = [torch.tensor(item).to(device) for item in y_test]
-    logger.info('loaded test data to device')
+    logger.info(f'loaded train data to device with {len(y_test)} samples')
     test_dataset = BioDataGenerator(X_test, y_test, tokenizer, max_length)
     
     return num_of_classes, train_dataset, valid_dataset, test_dataset
@@ -254,7 +254,6 @@ def load_most_recent_checkpoint(checkpoint_dir, model, optimizer, epoch):
         latest_checkpoint_path = os.path.join(checkpoint_dir, checkpoint_files[latest_checkpoint_index])
         checkpoint = torch.load(latest_checkpoint_path)
         # Load the model using your preferred method (assuming PyTorch for this example)
-        print(checkpoint.keys())
 
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

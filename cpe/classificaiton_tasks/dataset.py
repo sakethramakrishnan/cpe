@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 import torch
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
 class BioDataGenerator(Dataset):
     def __init__(
@@ -24,8 +24,9 @@ class BioDataGenerator(Dataset):
         assert len(self.sequences) ==  len(self.labels), "There are not the same number of sequences and labels"        
         
         self.tokenizer = tokenizer
-        self.tokenized_seqs = tokenizer(self.sequences, truncation=True, padding='max_length', max_length=max_length, return_tensors='pt')
-
+        self.tokenized_seqs = tokenizer(self.sequences, truncation=True, padding='max_length', max_length=max_length, return_tensors='pt').to(device)
+        self.labels = [torch.tensor(label).to(device) for label in labels]
+        
     def __len__(self) -> int:
         return len(self.sequences)
 
@@ -33,11 +34,11 @@ class BioDataGenerator(Dataset):
         # Get the idx'th sequence and label
         tokenized_seq = self.tokenized_seqs[idx]
         return_dict={}
-        return_dict['ids'] = torch.tensor(tokenized_seq.ids)
+        return_dict['ids'] = torch.tensor(tokenized_seq.ids).to(device)
 
-        return_dict['attention_mask'] = torch.tensor(tokenized_seq.attention_mask)
-        return_dict['token_type_ids'] = torch.tensor(tokenized_seq.type_ids)
-        return return_dict, torch.tensor(self.labels[idx])
+        return_dict['attention_mask'] = torch.tensor(tokenized_seq.attention_mask).to(device)
+        return_dict['token_type_ids'] = torch.tensor(tokenized_seq.type_ids).to(device)
+        return return_dict, self.labels[idx].to(device)
     
     
 class Optimizer:
