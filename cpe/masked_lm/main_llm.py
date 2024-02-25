@@ -13,7 +13,6 @@ from transformers import (
     PreTrainedTokenizerFast,
     Trainer,
     TrainingArguments,
-    DataCollatorForLanguageModeling
 )
 from transformers.trainer_utils import get_last_checkpoint
 
@@ -157,13 +156,9 @@ def main():
     # if we are instantiating a new model, we need to instantiate a new model from a json file (if statement)
     if Path(config.model_path).suffix == ".json":
         model_config = PretrainedConfig.from_json_file(config.model_path)
-        if config.tokenizer_type == 'dna_wordlevel':
-            model_config.vocab_size = 11
-        else:
-            model_config.vocab_size = tokenizer.vocab_size
-        
-        model_config.pad_token_id = int(tokenizer.vocab["[PAD]"])
-        
+
+
+
         # the following are only for gpt models
         if config.model_architecture in ['neox', 'NeoX', "GPT", 'gpt']:
             model_config.use_parallel_residual = True
@@ -183,7 +178,12 @@ def main():
         }
 
         # for some reason, we need to add the special tokens even though they are in the json file
+
         tokenizer.add_special_tokens(special_tokens)
+        model_config.vocab_size = len(tokenizer.vocab)
+
+        model_config.pad_token_id = int(tokenizer.vocab["[PAD]"])
+
         model = MODEL_DISPATCH[config.model_architecture](model_config)
     else:
         # There are different if-else cases because:
@@ -200,7 +200,7 @@ def main():
     )
 
     # get datasets
-    if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT']:
+    if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT'] and 1 == 0:
         train_dataset = FastaDatasetTokenized(
             config.train_path,
             num_char_per_token=config.num_char_per_token,
@@ -362,20 +362,20 @@ def main():
     # If the number of tokens in the tokenizer is different from the number of tokens
     # in the model resize the input embedding layer and the MLM prediction head
 
-    if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT']:
-        print('inside')
-        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=0.15)
+    # if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT']:
+    #     print('inside')
+    #     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=0.15)
 
-    else:
-        # custom DataCollator
-        data_collator = GenSLMColatorForLanguageModeling(
-            train_mode=True,
-            tokenizer=tokenizer,
-            mlm=config.mlm,
-            mlm_probability=config.mlm_probability, # for some reason the mlm_probability is stored as a tuple
-            model_architecture=config.model_architecture,
-            max_length = config.max_length
-        )
+  
+    # custom DataCollator
+    data_collator = GenSLMColatorForLanguageModeling(
+        train_mode=True,
+        tokenizer=tokenizer,
+        mlm=config.mlm,
+        mlm_probability=config.mlm_probability, # for some reason the mlm_probability is stored as a tuple
+        model_architecture=config.model_architecture,
+        max_length = config.max_length
+    )
 
     trainer = Trainer(
         model=model,

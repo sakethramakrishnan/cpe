@@ -191,7 +191,7 @@ class GenSLMColatorForLanguageModeling(DataCollatorForLanguageModeling):
             truncation=True,
             padding='max_length',
             return_special_tokens_mask=self.train_mode and self.mlm,
-            max_length=1080,
+            max_length=512,
         )
         
         input_ids = return_thing['input_ids'].tolist()[0]
