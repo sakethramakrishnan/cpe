@@ -1,0 +1,122 @@
+{
+    "os": "Linux-6.2.0-39-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "heartbeatAt": "2024-01-02T03:15:03.249103",
+    "startedAt": "2024-01-02T03:15:02.504571",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--config=training/sample_config.yaml"
+    ],
+    "state": "running",
+    "program": "/home/couchbucks/Documents/saketh/cpe/cpe/BiologicalTokenizers/my_version.py",
+    "codePathLocal": "my_version.py",
+    "codePath": "my_version.py",
+    "git": {
+        "remote": "https://github.com/idotan286/BiologicalTokenizers.git",
+        "commit": "4255fd040e192c6387d9947132edd12b0dfdcbb5"
+    },
+    "email": "saketh.ramakrishnan@gmail.com",
+    "root": "/home/couchbucks/Documents/saketh/cpe/cpe/BiologicalTokenizers",
+    "host": "dellkanini",
+    "username": "couchbucks",
+    "executable": "/home/couchbucks/Documents/saketh/cpe/env/bin/python3",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 1796.40875,
+        "min": 1400.0,
+        "max": 1800.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1796.404,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.406,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.511,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.301,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.255,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.294,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.265,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.217,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.645,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.388,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1476.972,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1353.196,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.456,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.63,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.618,
+            "min": 1400.0,
+            "max": 1800.0
+        },
+        {
+            "current": 1796.525,
+            "min": 1400.0,
+            "max": 1800.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 710.5950546264648,
+            "used": 311.3285598754883
+        }
+    },
+    "memory": {
+        "total": 14.967144012451172
+    }
+}

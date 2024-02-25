@@ -1,0 +1,56 @@
+# if tokenizer = ape_tokenizer; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+# if tokenizer = cpe_tokenizer; use:e .json files are from a few 
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = npe_tokenizer; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = codon_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = dna_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = protein_alphabet_wordlevel; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+num_train_epochs: 20
+per_device_train_batch_size: 10
+per_device_eval_batch_size: 10
+per_device_test_batch_size: 10
+num_workers: 4
+
+gradient_accumulation_steps: 2
+model_path: ""
+num_layers: 2
+num_attention_heads: 2
+hidden_size: 128
+
+output_dir: testing
+data_path: data/sample_c_data
+task_type: "classification"
+
+eval_steps: 1
+
+logging_steps: 500
+weight_decay: 0.01
+warmup_steps: 1000
+learning_rate: 0.00005
+save_steps: 500
+max_length: 512
+
+wandb_project: ''  # Set to empty string to turn off wandb, otherwise, set as the project name
+run_name: 'testing_biological_tokenizers'
+fp16: True
+tokenizer_path: 'tokenizer_json_files/protein_alphabet_wordlevel.json'
+# whether to translate the DNA sequence into protein alphabets
+tokenizer_type: "protein_alphabet_wordlevel"
+convert_to_aa: True
+num_char_per_token: 1 

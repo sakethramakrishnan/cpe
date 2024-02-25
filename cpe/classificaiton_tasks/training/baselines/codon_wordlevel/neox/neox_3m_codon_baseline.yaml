@@ -1,0 +1,50 @@
+eval_steps: 5
+fp16: false
+gradient_accumulation_steps: 2
+learning_rate: 5.0e-05
+load_best_model_at_end: true
+logging_steps: 1000
+logging_strategy: steps
+num_train_epochs: 250
+output_dir: checkpoints/baselines/codon_wordlevel/neox/neox_3m_codon_baseline_non_mlm_mdh
+per_device_eval_batch_size: 2
+per_device_train_batch_size: 2
+save_steps: 30
+save_total_limit: 5
+tokenizer_path: tokenizer_json_files/codon_wordlevel_71vocab.json
+train_path: /home/couchbucks/Documents/saketh/cpe/data/datasets/sample_fasta.fasta
+validation_path: /home/couchbucks/Documents/saketh/cpe/data/datasets/sample_fasta.fasta
+wandb_project: ''
+warmup_steps: 0
+weight_decay: 0.01
+
+# if tokenizer = ape_tokenizer; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+# if tokenizer = cpe_tokenizer; use:=
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = npe_tokenizer; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = codon_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 3
+
+# if tokenizer = dna_wordlevel; use:
+# convert_to_aa: False
+# num_char_per_token: 1
+
+# if tokenizer = protein_alphabet_wordlevel; use:
+# convert_to_aa: True
+# num_char_per_token: 1
+
+convert_to_aa: False
+num_char_per_token: 3
+tokenizer_type: codon_wordlevel
+model_architecture: 'neox'
+mlm: False
+model_path: "neox/neox_33m.json"
