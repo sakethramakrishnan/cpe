@@ -1,5 +1,5 @@
 # Representation learning for biological sequences using genome-scale language models
-We experimentally show that our proposed CPE tokenization algorithm outpeforms current k-mer state of the art tokenization in speed, performance, and biological meaningfulness.
+We experimentally show that our proposed CPE tokenization algorithm outpeforms current k-mer state of the art tokenization in speed and performance on biological downstream tasks.
 <p align="center">
 <img src=examples/imgs/visual_abstract_white_background.png />
 </p>
