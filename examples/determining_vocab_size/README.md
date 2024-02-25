@@ -3,7 +3,7 @@
 The Byte Pair Encoding (BPE) algorithm is a compression technique commonly used in natural language processing to create subword tokenizers. The algorithm begins with an initialization of the vocabulary, where each unique symbol (character or byte) in the training corpus is considered a separate token. Through iterative merges of the most frequently occurring symbol pairs, the vocabulary is updated to create new, compound symbols. This process continues until a predefined vocabulary size is reached, enabling the capture of recurring subword patterns and improving the model's ability to represent complex linguistic structures in its tokenization.
 
 Here's a great example of how the BPE algorithm works:
-![Example on How BPE Works](bpe_image.jpg)
+![Example on How BPE Works](../imgs/bpe_image.png)
 
 In the realm of genetic code analysis, BPE provides a valuable tool for creating tokenizers that capture local sequence motifs. Applied to DNA, protein, and codon sequences, the algorithm starts with an initial vocabulary of individual nucleotides, amino acids, or "codon characters". By merging frequently occurring pairs, the algorithm adapts to recognize common subword sequences within the genetic data. This subword tokenization allows for a more nuanced representation of genetic information, aiding language models in understanding the intricacies of biological sequences and uncovering meaningful patterns in the underlying genetic code.
 
