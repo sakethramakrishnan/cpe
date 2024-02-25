@@ -1,33 +1,18 @@
-import functools
-import time
-import warnings
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-from contextlib import ExitStack
+
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import os
-import h5py
-import matplotlib.pyplot as plt
+
 import numpy as np
 import torch
 import numpy.typing as npt
-from Bio import SeqIO  # type: ignore[import]
 
-from sklearn.manifold import TSNE
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import BatchEncoding, PreTrainedTokenizerFast, BertForMaskedLM
-from utils import (
-    gc_content,
-    get_label_dict,
-    parse_sequence_labels,
-    preprocess_data,
-    read_fasta,
-)
+
 from dataset import FastaDataset
+
+from argparse import ArgumentParser
 
 CODON_TO_CHAR = {
     "TCG": "A",
@@ -97,14 +82,22 @@ CODON_TO_CHAR = {
     "XXX": "*",
 }
 
+parser = ArgumentParser()
+parser.add_argument("--fasta_path", type=str, required=True)
+
+parser.add_argument("--tokenizer_path", type=str, required=True)
+parser.add_argument("--model_checkpoint", type=str, required=True)
+parser.add_argument("--save_name", type=str, required=True)
+args = parser.parse_args()
+
 # enter the fasta filepath to a fasta path:
-fasta_path = "../data/datasets/mdh/mdh_natural_dataset.fasta"
+fasta_path = args.fasta_path
 
 # enter the checkpoint to the tokenizer:
-tokenizer_path = "/cpe_tokenizer_retrained_3000"
+tokenizer_path = args.tokenizer_path
 
 
-model_checkpoint = "/checkpoints/bpe/cpe_tokenizer/bert/checkpoint-34000"
+model_checkpoint = args.model_checkpoint
 
 # ImportError: cannot import name 'GenSLMColatorForLanguageModeling' from 'dataset' (/home/couchbucks/Documents/saketh/cpe/cpe/dataset.py)
 from transformers import BatchEncoding, DataCollatorForLanguageModeling
@@ -171,6 +164,7 @@ def generate_embeddings_and_logits(model, dataloader):
                 input_ids.append(input_id[1 : seq_len - 1].cpu().numpy())
 
     return np.array(embeddings), logits, input_ids
+
 
 
 def llm_inference(
