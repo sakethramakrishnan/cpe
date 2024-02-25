@@ -378,5 +378,6 @@ cpe/classification_tasks/training
 cpe/classification_tasks/embeddings
 cpe/classification_tasks/data
 examples/determining_vocab_size/experiment_tokenizers_saved
-data/datasets/fungi
+data/datasets/fungi/
+data/datasets/fungi/test_fungi.fasta
 data/datasets/mdh/
