@@ -18,7 +18,9 @@ from transformers.trainer_utils import get_last_checkpoint
 
 from dataset import FastaDataset, GenSLMColatorForLanguageModeling, FastaDatasetTokenized
 import evaluate
-from utils import cpe_decode, get_aligned_seqs, get_num_correct, get_num_correct_punish
+
+from utils import cpe_decode, get_aligned_seqs, get_num_correct, get_num_correct_punish, build_bpe_tokenizer
+
 import numpy as np
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="1"
@@ -44,11 +46,10 @@ class GenSLMTrainingConfig:
     model_architecture: str = ""
     model_path: str = ""
     max_length: int = 1080
-    tokenizer_path: str = (
-        ""
-    )
-    mlm: bool = True,
-    mlm_probability: float = 0.15,
+
+    tokenizer_path: str = ""
+    mlm: bool = True
+    mlm_probability: float = 0.15
     output_dir: str = ""
     train_path: str = ""
     validation_path: str = ""
@@ -66,6 +67,8 @@ class GenSLMTrainingConfig:
     fp16: bool = True
     # whether to translate the DNA sequence into protein alphabets
     tokenizer_type: str = ""
+    vocab_size: int = 0
+
     convert_to_aa: bool = True
     num_char_per_token: int = 1  # how many characters per token
 
@@ -140,6 +143,43 @@ def main():
         report_to=["wandb" if config.wandb_project else "none"],
     )
 
+
+
+    # get datasets
+    if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT'] and 1 == 0:
+        train_dataset = FastaDatasetTokenized(
+            config.train_path,
+            num_char_per_token=config.num_char_per_token,
+            convert_to_aa=config.convert_to_aa,
+            tokenizer_type=config.tokenizer_type,
+            tokenizer=tokenizer
+        )
+        eval_dataset = FastaDatasetTokenized(
+            config.validation_path,
+            num_char_per_token=config.num_char_per_token,
+            convert_to_aa=config.convert_to_aa,
+            tokenizer_type=config.tokenizer_type,
+            tokenizer=tokenizer
+        )
+
+    else:
+        train_dataset = FastaDataset(
+            config.train_path,
+            num_char_per_token=config.num_char_per_token,
+            convert_to_aa=config.convert_to_aa,
+            tokenizer_type=config.tokenizer_type,
+        )
+        eval_dataset = FastaDataset(
+            config.validation_path,
+            num_char_per_token=config.num_char_per_token,
+            convert_to_aa=config.convert_to_aa,
+            tokenizer_type=config.tokenizer_type,
+        )
+
+    print(f"{len(train_dataset)} training samples.")
+    print(f"{len(eval_dataset)} evaluation samples.")
+
+
     # Build Tokenizer
     if os.path.isfile(Path(config.tokenizer_path)):
         # These are for the .json files
@@ -149,7 +189,22 @@ def main():
 
     else:
         # These are for the bpe tokenizers
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+
+        if config.tokenizer_path not in ["", None]:
+            tokenizer = PreTrainedTokenizerFast.from_pretrained(config.tokenizer_path)
+        else:
+            
+            # build bpe tokenizer on the fly
+
+            full_dataset = train_dataset + eval_dataset
+            tokenizer = build_bpe_tokenizer(
+                    corpus_iterator = full_dataset,
+                    vocab_size = config.vocab_size,
+                    tokenizer_type = config.tokenizer_type,
+                    save = False
+                    )
+
+
 
     # Build model
 
@@ -180,9 +235,9 @@ def main():
         # for some reason, we need to add the special tokens even though they are in the json file
 
         tokenizer.add_special_tokens(special_tokens)
-        model_config.vocab_size = len(tokenizer.vocab)
 
         model_config.pad_token_id = int(tokenizer.vocab["[PAD]"])
+        model_config.vocab_size = len(tokenizer.vocab)
 
         model = MODEL_DISPATCH[config.model_architecture](model_config)
     else:
@@ -198,52 +253,6 @@ def main():
         f"Training model with name `{config.model_architecture}` "
         f"- Total size={n_params/2**20:.2f}M params or {n_params}"
     )
-
-    # get datasets
-    if config.tokenizer_type == 'dna_wordlevel' and config.model_architecture in ['bert', 'Bert', 'BERT'] and 1 == 0:
-        train_dataset = FastaDatasetTokenized(
-            config.train_path,
-            num_char_per_token=config.num_char_per_token,
-            convert_to_aa=config.convert_to_aa,
-            tokenizer_type=config.tokenizer_type,
-            tokenizer=tokenizer
-        )
-        eval_dataset = FastaDatasetTokenized(
-            config.validation_path,
-            num_char_per_token=config.num_char_per_token,
-            convert_to_aa=config.convert_to_aa,
-            tokenizer_type=config.tokenizer_type,
-            tokenizer=tokenizer
-        )
-        
-    else:
-        train_dataset = FastaDataset(
-            config.train_path,
-            num_char_per_token=config.num_char_per_token,
-            convert_to_aa=config.convert_to_aa,
-            tokenizer_type=config.tokenizer_type,
-        )
-        eval_dataset = FastaDataset(
-            config.validation_path,
-            num_char_per_token=config.num_char_per_token,
-            convert_to_aa=config.convert_to_aa,
-            tokenizer_type=config.tokenizer_type,
-        )
-        
-
-    vocab = tokenizer.vocab
-
-    if config.tokenizer_type == 'cpe_tokenizer':
-        off_limits_start_atg = []
-
-        for token in vocab:
-            if len(token) > 1 and token[0] == 'n': # this finds all the tokens that start with 'ATG' that are not 'ATG' because 'ATG' = 'n' in CPE lang
-                off_limits_start_atg.append(token)
-
-        for off_limit_token in off_limits_start_atg:
-
-            pass
-
 
     metric = evaluate.load("accuracy")
     def compute_metrics(eval_pred):
@@ -266,11 +275,13 @@ def main():
                 # because there are masked tokens and non masked tokens, we need to decode MLM separately
                 print_str = ' '.join(['NaN' if token == -100 else tokenizer.decode(token) for token in acc]) # NaN represents the sequences that don't matter
                 #print_str = tokenizer.decode(acc).replace("[", "")
-                print(f"Acc gtruth: {print_str}") # Keep the label like this so that we can more easily compare label and predictions
+
+                #print(f"Acc gtruth: {print_str}") # Keep the label like this so that we can more easily compare label and predictions
                 
                 prediction_str = tokenizer.decode(pred).replace("[", "")
                 #print(pred)
-                print(f"Prediction: {prediction_str.replace(']', '')}") # replace the brackets with empty spaces to make it easier to read
+                #print(f"Prediction: {prediction_str.replace(']', '')}") # replace the brackets with empty spaces to make it easier to read
+
 
                 prediction_list = []
                 label_list = []
@@ -282,8 +293,10 @@ def main():
                             prediction_list.append(pred[i])
                             label_list.append(token)
 
-                print(f"Predicted Tokens (need not be in order in samples): {tokenizer.decode(prediction_list)}")
-                print(f"Actual Tokens (need not be in order in samples): {tokenizer.decode(label_list)}")
+
+                #print(f"Predicted Tokens (need not be in order in samples): {tokenizer.decode(prediction_list)}")
+                #print(f"Actual Tokens (need not be in order in samples): {tokenizer.decode(label_list)}")
+
                 assert len(prediction_list) == len(label_list), "the predictions and labels are not the same length for MASKED LM"
                 
                 predictions_list.extend(prediction_list)
@@ -316,9 +329,10 @@ def main():
                 else:
                     predicted_seq = (tokenizer.decode(prediction_list)).replace(" ", "")
                     actual_seq = (tokenizer.decode(label_list)).replace(" ", "")
-                
-                print(f"Prediction: {predicted_seq}")
-                print(f"Acc gtruth: {actual_seq}")
+
+                #print(f"Prediction: {predicted_seq}")
+                #print(f"Acc gtruth: {actual_seq}")
+
                 
                 # if config.tokenizer_type in BPE_TOKENIZERS:
                 ga_align1, ga_align2, ga_alignment_score, la_align1, la_align2, la_alignment_score = get_aligned_seqs(predicted_seq, actual_seq)
