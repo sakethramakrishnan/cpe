@@ -1,0 +1,42 @@
+[
+  {
+    "vocab_size": 71,
+    "mean_tokenized_sequence_len": 324.30960115748957
+  },
+  {
+    "vocab_size": 80,
+    "mean_tokenized_sequence_len": 317.61477983129043
+  },
+  {
+    "vocab_size": 100,
+    "mean_tokenized_sequence_len": 308.2543747099451
+  },
+  {
+    "vocab_size": 900,
+    "mean_tokenized_sequence_len": 229.05667330949197
+  },
+  {
+    "vocab_size": 1700,
+    "mean_tokenized_sequence_len": 210.97114465889547
+  },
+  {
+    "vocab_size": 2500,
+    "mean_tokenized_sequence_len": 202.000928175589
+  },
+  {
+    "vocab_size": 3300,
+    "mean_tokenized_sequence_len": 196.42242909011492
+  },
+  {
+    "vocab_size": 4100,
+    "mean_tokenized_sequence_len": 192.42204690016652
+  },
+  {
+    "vocab_size": 4900,
+    "mean_tokenized_sequence_len": 189.36136059621631
+  },
+  {
+    "vocab_size": 5700,
+    "mean_tokenized_sequence_len": 186.89833747372444
+  }
+]

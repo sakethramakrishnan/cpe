@@ -370,5 +370,14 @@ GitHub.sublime-settings
 #IRIS dataset
 *.data
 
-cpe/checkpoints/baselines/codon_wordlevel/
-cpe/checkpoints/bpe/cpe_tokenizer/
+cpe/checkpoints/
+cpe/masked_lm/checkpoints
+cpe/masked_lm/training
+cpe/classification_tasks/checkpoints
+cpe/classification_tasks/training
+cpe/classification_tasks/embeddings
+cpe/classification_tasks/data
+examples/determining_vocab_size/experiment_tokenizers_saved
+data/datasets/fungi/
+data/datasets/fungi/test_fungi.fasta
+data/datasets/mdh/
